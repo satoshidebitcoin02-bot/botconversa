@@ -5,7 +5,7 @@ function renderStories(personas) {
   el.innerHTML = personas.map(p => `
     <div class="story" onclick="location.href='chat.html?id=${p.id}'">
       <div class="avatar-wrap">
-        <span class="ai-tag">IA</span>
+        <span class="ai-tag">BOT</span>
         <img src="${p.avatar}" alt="${p.name}" />
         <span class="dot"></span>
       </div>
@@ -25,7 +25,7 @@ function renderConvoList(personas) {
       <div class="body">
         <div class="name-row">
           <span>${p.name}</span>
-          <span class="ai-pill">IA</span>
+          <span class="ai-pill">BOT</span>
         </div>
         <div class="preview">${p.opener}</div>
       </div>

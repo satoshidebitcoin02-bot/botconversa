@@ -141,7 +141,7 @@ function renderFlowEditor(personaId) {
           <div class="flow-button-row">
             <input type="text" class="btn-label" data-persona="${personaId}" data-idx="${idx}" data-bidx="${bIdx}" value="${(btn.label || "").replace(/"/g, "&quot;")}" placeholder="Texto do botão" />
             <select class="btn-next" data-persona="${personaId}" data-idx="${idx}" data-bidx="${bIdx}">
-              <option value="-1" ${btn.next == null || btn.next === -1 ? "selected" : ""}>Encerrar (devolve pra IA)</option>
+              <option value="-1" ${btn.next == null || btn.next === -1 ? "selected" : ""}>Encerrar (devolve pro roteiro simulado)</option>
               ${draft.nodes.map((n2, i2) => `<option value="${i2}" ${btn.next === i2 ? "selected" : ""}>${nodePreview(n2, i2)}</option>`).join("")}
             </select>
             <button type="button" class="admin-secondary-btn remove-button-btn" data-persona="${personaId}" data-idx="${idx}" data-bidx="${bIdx}">✕</button>
