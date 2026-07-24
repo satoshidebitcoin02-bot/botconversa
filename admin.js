@@ -195,10 +195,22 @@ async function doSetup() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ newPassword: pwd }),
     });
-    if (!res.ok) throw new Error();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      if (data.error === "senha atual incorreta") {
+        // já existe uma senha salva (ex: clique duplicado numa tentativa anterior) — manda pro login
+        setupError.textContent = "Uma senha já foi criada antes. Tentando login com essa senha...";
+        hideAllScreens();
+        loginScreen.hidden = false;
+        passwordInput.value = pwd;
+        return;
+      }
+      setupError.textContent = data.error || "Erro ao criar senha. Tente novamente.";
+      return;
+    }
     await enterPanel(pwd);
   } catch {
-    setupError.textContent = "Erro ao criar senha. Tente novamente.";
+    setupError.textContent = "Erro de conexão. Tente novamente.";
   } finally {
     setupBtn.disabled = false;
   }
