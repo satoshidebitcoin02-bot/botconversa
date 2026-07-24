@@ -397,25 +397,33 @@ body.admin-body {
 
 .flow-toolbar {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  gap: 10px;
   padding: 12px 14px;
   border-bottom: 1px solid var(--border);
+}
+
+.flow-toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   flex-wrap: wrap;
 }
 
 .flow-name-input {
   font-size: 14px;
-  padding: 7px 10px;
+  font-weight: 600;
+  padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid var(--border);
-  min-width: 180px;
+  width: 100%;
+  max-width: 320px;
 }
 
 .flow-persona-assign {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 6px 14px;
   font-size: 12.5px;
   color: var(--text-dim);
 }
@@ -424,6 +432,7 @@ body.admin-body {
   display: flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
 }
 
 .flow-toolbar-actions {
@@ -481,13 +490,48 @@ body.admin-body {
   position: relative;
 }
 
+/* reset do visual padrão do Drawflow — só o .df-node interno desenha a caixa */
+.drawflow .drawflow-node {
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  min-height: 0;
+  width: auto;
+}
+
+.drawflow .drawflow-node.selected .df-node {
+  outline: 2px solid var(--purple);
+  outline-offset: 1px;
+}
+
+.drawflow .drawflow-node .input,
+.drawflow .drawflow-node .output {
+  width: 14px;
+  height: 14px;
+  background: #ffcf4d;
+  border: 2px solid #1c1a26;
+  z-index: 2;
+}
+
+.drawflow .drawflow-node .input:hover,
+.drawflow .drawflow-node .output:hover {
+  background: #fff;
+}
+
+.drawflow .connection .main-path {
+  stroke: #6fd39a;
+  stroke-width: 3px;
+}
+
 /* nós do Drawflow */
 .drawflow .df-node {
   background: #241f38;
   color: #e8e5f5;
   border-radius: 10px;
   padding: 10px 12px;
-  min-width: 190px;
+  width: 190px;
+  box-sizing: border-box;
   font-size: 12.5px;
 }
 
@@ -547,8 +591,6 @@ body.admin-body {
   font-size: 11px;
   color: #a99fe0;
 }
-
-.drawflow .drawflow-node { padding: 0; }
 
 .admin-save-bar {
   position: fixed;

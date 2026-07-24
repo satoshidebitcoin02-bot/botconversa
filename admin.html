@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Painel Admin — BOT Companion</title>
 <link rel="stylesheet" href="styles.css" />
-<link rel="stylesheet" href="admin.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/drawflow@0.0.59/dist/drawflow.min.css" />
+<link rel="stylesheet" href="admin.css" />
 </head>
 <body class="admin-body">
 
@@ -85,12 +85,16 @@
 
         <div id="flowEditorWrap" class="flow-editor-wrap" hidden>
           <div class="flow-toolbar">
-            <input id="flowNameInput" type="text" class="flow-name-input" placeholder="Nome do fluxo" />
-            <div id="flowPersonaAssign" class="flow-persona-assign"></div>
-            <div class="flow-toolbar-actions">
-              <button type="button" id="saveFlowBtn" class="admin-primary-btn">Salvar fluxo</button>
-              <button type="button" id="deleteFlowBtn" class="admin-secondary-btn">Excluir</button>
-              <button type="button" id="closeFlowEditorBtn" class="admin-secondary-btn">Fechar</button>
+            <div class="flow-toolbar-row">
+              <input id="flowNameInput" type="text" class="flow-name-input" placeholder="Nome do fluxo" />
+            </div>
+            <div class="flow-toolbar-row">
+              <div id="flowPersonaAssign" class="flow-persona-assign"></div>
+              <div class="flow-toolbar-actions">
+                <button type="button" id="saveFlowBtn" class="admin-primary-btn">Salvar fluxo</button>
+                <button type="button" id="deleteFlowBtn" class="admin-secondary-btn">Excluir</button>
+                <button type="button" id="closeFlowEditorBtn" class="admin-secondary-btn">Fechar</button>
+              </div>
             </div>
           </div>
           <div id="flowSaveStatus" class="admin-status"></div>
