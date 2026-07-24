@@ -62,6 +62,68 @@ body.admin-body {
   min-height: 16px;
 }
 
+.admin-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-sidebar {
+  width: 210px;
+  flex: 0 0 auto;
+  background: #14121f;
+  color: #cfcbe0;
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-sidebar-title {
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 6px 10px 16px;
+}
+
+.admin-tab-btn {
+  background: none;
+  border: none;
+  color: #cfcbe0;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 9px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.admin-tab-btn:hover { background: rgba(255,255,255,0.06); }
+.admin-tab-btn.active { background: var(--grad); color: #fff; font-weight: 600; }
+
+.admin-main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  height: 100vh;
+}
+
+.admin-tab-panel {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 20px 100px;
+}
+
+.admin-tab-panel[hidden] { display: none; }
+
+.admin-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.admin-card-header h2 { margin: 0; }
+
 .admin-wrap {
   max-width: 640px;
   margin: 0 auto;
@@ -283,6 +345,210 @@ body.admin-body {
   align-self: flex-start;
   font-size: 12px;
 }
+
+/* ---------- Flows tab ---------- */
+#tab-flows.admin-tab-panel {
+  max-width: none;
+  padding: 20px;
+}
+
+.flows-shell {
+  display: flex;
+  gap: 16px;
+  height: calc(100vh - 40px);
+}
+
+.flows-list-wrap {
+  width: 240px;
+  flex: 0 0 auto;
+}
+
+.flow-list-item {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  font-size: 13.5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.flow-list-item:hover { border-color: var(--blue); }
+.flow-list-item.active { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+
+.flow-persona-count {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.flow-editor-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.flow-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.flow-name-input {
+  font-size: 14px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  min-width: 180px;
+}
+
+.flow-persona-assign {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.flow-persona-check {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.flow-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+#flowSaveStatus { padding: 4px 14px; }
+
+.flow-editor-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.node-palette {
+  width: 170px;
+  flex: 0 0 auto;
+  background: #faf9fc;
+  border-right: 1px solid var(--border);
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.node-palette h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-dim);
+  margin: 14px 0 6px;
+}
+
+.node-palette h3:first-child { margin-top: 0; }
+
+.palette-item {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12.5px;
+  margin-bottom: 6px;
+  cursor: grab;
+  user-select: none;
+}
+
+.palette-item:hover { border-color: var(--purple); }
+
+.drawflow-canvas {
+  flex: 1;
+  min-width: 0;
+  background: #1c1a26;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 18px 18px;
+  position: relative;
+}
+
+/* nós do Drawflow */
+.drawflow .df-node {
+  background: #241f38;
+  color: #e8e5f5;
+  border-radius: 10px;
+  padding: 10px 12px;
+  min-width: 190px;
+  font-size: 12.5px;
+}
+
+.df-node-title {
+  font-weight: 700;
+  font-size: 12.5px;
+  margin-bottom: 8px;
+  color: #fff;
+}
+
+.df-field {
+  width: 100%;
+  box-sizing: border-box;
+  background: #1a1729;
+  border: 1px solid #3a3455;
+  color: #e8e5f5;
+  border-radius: 6px;
+  padding: 5px 7px;
+  font-size: 12px;
+  margin-bottom: 4px;
+  font-family: inherit;
+}
+
+.df-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.df-row input[type="number"] { width: 55px; }
+
+.df-branch-letter {
+  width: 16px;
+  color: #a99fe0;
+  font-weight: 700;
+}
+
+.df-hint {
+  color: #a99fe0;
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.df-upload-btn {
+  display: inline-block;
+  background: #3a3455;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.df-file-name {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #a99fe0;
+}
+
+.drawflow .drawflow-node { padding: 0; }
 
 .admin-save-bar {
   position: fixed;

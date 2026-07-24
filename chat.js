@@ -1,7 +1,7 @@
-// Página de conversa — chat com uma persona de IA (sempre rotulada como IA).
-// Fluxo de botões estilo ManyChat (persona.flow.nodes[]) é o mecanismo
-// principal. Não há IA externa conectada — texto livre cai só no roteiro
-// simulado local (data.js).
+// Página de conversa — chat com uma persona automatizada (BOT, sempre
+// rotulada como tal). O fluxo visual (grafo desenhado no admin, estilo
+// ManyChat) é o mecanismo principal; texto livre digitado fora do fluxo
+// cai no roteiro simulado local (data.js) — não há IA externa conectada.
 
 const params = new URLSearchParams(location.search);
 const personaId = params.get("id");
@@ -12,15 +12,13 @@ const sendBtn = document.getElementById("sendBtn");
 const photoInput = document.getElementById("photoInput");
 const attachPhotoBtn = document.getElementById("attachPhotoBtn");
 const attachAudioBtn = document.getElementById("attachAudioBtn");
-const quickRepliesEl = document.getElementById("quickReplies");
 
-let persona = PERSONAS.find(p => p.id === personaId) || PERSONAS[0];
+let persona = PERSONAS[0];
 let aiMsgCount = 0;
-const AD_EVERY_N_AI_MESSAGES = 4; // mostra um anúncio intersticial a cada N mensagens enviadas pela IA
-const history = []; // histórico enviado pra API (role: "user" | "assistant")
+const AD_EVERY_N_AI_MESSAGES = 4; // mostra um anúncio intersticial a cada N mensagens enviadas
+const history = [];
 
 async function fetchAiReply(text) {
-  // sem IA externa conectada — usa direto o roteiro simulado local
   return generateReply(text);
 }
 
@@ -42,13 +40,35 @@ function addMediaBubble(kind, url, who) {
   const row = document.createElement("div");
   row.className = `msg-row ${who}`;
   const media = kind === "image"
-    ? `<img class="bubble-image" src="${url}" alt="foto enviada" />`
+    ? `<img class="bubble-image" src="${url}" alt="mídia" />`
     : `<audio class="bubble-audio" controls src="${url}"></audio>`;
   if (who === "them") {
     row.innerHTML = `<img class="mini-avatar" src="${persona.avatar}" alt="" /><div class="bubble bubble-media">${media}</div>`;
   } else {
     row.innerHTML = `<div class="bubble bubble-media">${media}</div>`;
   }
+  messagesEl.appendChild(row);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function addDocumentBubble(filename, url) {
+  const row = document.createElement("div");
+  row.className = "msg-row them";
+  row.innerHTML = `
+    <img class="mini-avatar" src="${persona.avatar}" alt="" />
+    <a class="bubble bubble-doc" href="${url || "#"}" target="_blank" rel="noopener">📄 ${filename || "documento"}</a>
+  `;
+  messagesEl.appendChild(row);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function addContactBubble(name, phone) {
+  const row = document.createElement("div");
+  row.className = "msg-row them";
+  row.innerHTML = `
+    <img class="mini-avatar" src="${persona.avatar}" alt="" />
+    <div class="bubble bubble-contact">👤 <strong>${name || "Contato"}</strong>${phone ? "<br>" + phone : ""}</div>
+  `;
   messagesEl.appendChild(row);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
@@ -114,8 +134,6 @@ function showAdOverlay() {
   };
 }
 
-// entrega uma resposta "them" já pronta (usada tanto pelo fluxo quanto pela IA),
-// cuidando de som, histórico e frequência de anúncios
 function deliverReply(text) {
   addBubble(text, "them");
   playReceiveSound();
@@ -129,61 +147,113 @@ function deliverReply(text) {
   }
 }
 
-// ---- fluxo estilo ManyChat (botões de resposta rápida) ----
-function renderQuickReplies(nodeIndex) {
-  const flow = persona.flow;
-  quickRepliesEl.innerHTML = "";
-  if (!flow || !Array.isArray(flow.nodes) || nodeIndex == null) return;
-  const node = flow.nodes[nodeIndex];
-  if (!node || !Array.isArray(node.buttons) || node.buttons.length === 0) return;
-
-  node.buttons.forEach(btn => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "quick-reply-btn";
-    b.textContent = btn.label || "…";
-    b.addEventListener("click", () => handleQuickReply(btn));
-    quickRepliesEl.appendChild(b);
-  });
+function sleepRandom() {
+  return new Promise(r => setTimeout(r, 500 + Math.random() * 500));
 }
 
-async function handleQuickReply(btn) {
-  quickRepliesEl.innerHTML = "";
-  addBubble(btn.label || "…", "me");
-  playSendSound();
-  history.push({ role: "user", content: btn.label || "" });
+// ---- motor do fluxo visual (grafo estilo ManyChat) ----
+const flowRuntime = { nodes: null, waitingForReply: false, currentNodeId: null };
 
-  const nextIdx = typeof btn.next === "number" ? btn.next : -1;
-  const flow = persona.flow;
-  const nextNode = flow && nextIdx >= 0 ? flow.nodes[nextIdx] : null;
+function getGraphNodes(flow) {
+  return (flow && flow.graph && flow.graph.drawflow && flow.graph.drawflow.Home && flow.graph.drawflow.Home.data) || {};
+}
 
-  showTyping();
-  await new Promise(r => setTimeout(r, 500 + Math.random() * 500));
-  hideTyping();
+function findStartNodeId(nodes) {
+  const ids = Object.keys(nodes);
+  const withIncoming = new Set();
+  ids.forEach(id => {
+    Object.values(nodes[id].outputs || {}).forEach(out => {
+      (out.connections || []).forEach(conn => withIncoming.add(String(conn.node)));
+    });
+  });
+  return ids.find(id => !withIncoming.has(String(id))) || ids[0] || null;
+}
 
-  if (nextNode) {
-    deliverReply(nextNode.message || "…");
-    renderQuickReplies(nextIdx);
-  } else {
-    // fim do fluxo (ou "sem ação") — devolve pra IA/roteiro simulado
-    const reply = await fetchAiReply(btn.label || "");
-    deliverReply(reply);
+function nextNodeId(node, outputKey) {
+  const out = node.outputs && node.outputs[outputKey || "output_1"];
+  const conn = out && out.connections && out.connections[0];
+  return conn ? String(conn.node) : null;
+}
+
+function pickRandomizerOutput(node) {
+  const branches = (node.data && node.data.branches) || [];
+  const total = branches.reduce((s, b) => s + (Number(b.weight) || 0), 0) || 1;
+  let r = Math.random() * total;
+  for (let i = 0; i < branches.length; i++) {
+    r -= Number(branches[i].weight) || 0;
+    if (r <= 0) return `output_${i + 1}`;
+  }
+  return "output_1";
+}
+
+async function runFlowFrom(nodeId) {
+  const nodes = flowRuntime.nodes;
+  let id = nodeId;
+  while (id) {
+    const node = nodes[id];
+    if (!node) break;
+
+    if (node.name === "text") {
+      showTyping();
+      await sleepRandom();
+      hideTyping();
+      deliverReply((node.data && node.data.message) || "…");
+      id = nextNodeId(node);
+    } else if (node.name === "delay") {
+      const secs = Math.min(Number(node.data && node.data.seconds) || 1, 120);
+      await new Promise(r => setTimeout(r, secs * 1000));
+      id = nextNodeId(node);
+    } else if (node.name === "randomizer") {
+      id = nextNodeId(node, pickRandomizerOutput(node));
+    } else if (node.name === "wait") {
+      flowRuntime.waitingForReply = true;
+      flowRuntime.currentNodeId = id;
+      return;
+    } else if (node.name === "audio" || node.name === "media") {
+      showTyping();
+      await sleepRandom();
+      hideTyping();
+      addMediaBubble(node.name === "audio" ? "audio" : "image", (node.data && node.data.url) || "", "them");
+      playReceiveSound();
+      id = nextNodeId(node);
+    } else if (node.name === "document") {
+      showTyping();
+      await sleepRandom();
+      hideTyping();
+      addDocumentBubble((node.data && node.data.filename) || "documento", (node.data && node.data.url) || "");
+      playReceiveSound();
+      id = nextNodeId(node);
+    } else if (node.name === "contact") {
+      showTyping();
+      await sleepRandom();
+      hideTyping();
+      addContactBubble((node.data && node.data.name) || "Contato", (node.data && node.data.phone) || "");
+      playReceiveSound();
+      id = nextNodeId(node);
+    } else {
+      id = nextNodeId(node);
+    }
   }
 }
 
 async function sendMessage() {
   const text = inputEl.value.trim();
   if (!text) return;
-  quickRepliesEl.innerHTML = "";
   addBubble(text, "me");
   playSendSound();
   inputEl.value = "";
   history.push({ role: "user", content: text });
 
-  showTyping();
-  const minDelay = new Promise(r => setTimeout(r, 500 + Math.random() * 500));
-  const [reply] = await Promise.all([fetchAiReply(text), minDelay]);
+  if (flowRuntime.waitingForReply && flowRuntime.nodes) {
+    flowRuntime.waitingForReply = false;
+    const node = flowRuntime.nodes[flowRuntime.currentNodeId];
+    await runFlowFrom(nextNodeId(node));
+    return;
+  }
 
+  showTyping();
+  const minDelay = sleepRandom();
+  const [reply] = await Promise.all([fetchAiReply(text), minDelay]);
   hideTyping();
   deliverReply(reply);
 }
@@ -249,11 +319,13 @@ attachAudioBtn.addEventListener("click", toggleRecording);
   document.getElementById("hdrAvatar").src = persona.avatar;
   document.getElementById("hdrName").textContent = persona.name;
 
-  const hasFlow = persona.flow && Array.isArray(persona.flow.nodes) && persona.flow.nodes.length > 0;
-  if (hasFlow) {
-    const startNode = persona.flow.nodes[0];
-    addBubble(startNode.message || persona.opener, "them");
-    renderQuickReplies(0);
+  const flow = findFlowForPersona(config, persona.id);
+  const nodes = flow ? getGraphNodes(flow) : {};
+  const startId = flow ? findStartNodeId(nodes) : null;
+
+  if (flow && startId) {
+    flowRuntime.nodes = nodes;
+    await runFlowFrom(startId);
   } else {
     addBubble(persona.opener, "them");
   }

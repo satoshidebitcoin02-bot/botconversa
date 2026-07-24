@@ -6,60 +6,121 @@
 <title>Painel Admin — BOT Companion</title>
 <link rel="stylesheet" href="styles.css" />
 <link rel="stylesheet" href="admin.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/drawflow@0.0.59/dist/drawflow.min.css" />
 </head>
 <body class="admin-body">
 
-<div id="adminPanel" class="admin-wrap">
-  <header class="admin-header">
-    <h1>Painel Admin</h1>
-  </header>
+<div class="admin-shell">
+  <nav class="admin-sidebar">
+    <div class="admin-sidebar-title">Painel Admin</div>
+    <button type="button" class="admin-tab-btn active" data-tab="appearance">🎨 Aparência</button>
+    <button type="button" class="admin-tab-btn" data-tab="personas">🧑 Personagens</button>
+    <button type="button" class="admin-tab-btn" data-tab="flows">🔀 Fluxos</button>
+  </nav>
 
-  <section class="admin-card">
-    <h2>Logo do app</h2>
-    <div class="admin-row">
-      <label><input type="radio" name="logoType" value="text" checked /> Texto</label>
-      <label><input type="radio" name="logoType" value="image" /> Imagem</label>
-    </div>
-    <input id="logoTextInput" type="text" placeholder="Texto do logo (ex: chats)" />
-    <div id="logoImageGroup" hidden>
-      <input id="logoImageInput" type="hidden" />
-      <label class="admin-upload-btn">
-        📁 Enviar arquivo
-        <input id="logoImageFile" type="file" accept="image/*" hidden />
-      </label>
-    </div>
-  </section>
+  <main class="admin-main">
 
-  <section class="admin-card">
-    <h2>Fundo da conversa</h2>
-    <input id="backgroundInput" type="hidden" />
-    <label class="admin-upload-btn">
-      📁 Enviar arquivo
-      <input id="backgroundFile" type="file" accept="image/*" hidden />
-    </label>
-    <div id="backgroundPreview" class="admin-bg-preview"></div>
-  </section>
+    <section id="tab-appearance" class="admin-tab-panel">
+      <section class="admin-card">
+        <h2>Logo do app</h2>
+        <div class="admin-row">
+          <label><input type="radio" name="logoType" value="text" checked /> Texto</label>
+          <label><input type="radio" name="logoType" value="image" /> Imagem</label>
+        </div>
+        <input id="logoTextInput" type="text" placeholder="Texto do logo (ex: chats)" />
+        <div id="logoImageGroup" hidden>
+          <input id="logoImageInput" type="hidden" />
+          <label class="admin-upload-btn">
+            📁 Enviar arquivo
+            <input id="logoImageFile" type="file" accept="image/*" hidden />
+          </label>
+        </div>
+      </section>
 
-  <section class="admin-card">
-    <h2>Sons</h2>
-    <label class="admin-row">
-      <input id="soundsToggle" type="checkbox" checked />
-      Ativar som ao enviar/receber mensagens
-    </label>
-  </section>
+      <section class="admin-card">
+        <h2>Fundo da conversa</h2>
+        <input id="backgroundInput" type="hidden" />
+        <label class="admin-upload-btn">
+          📁 Enviar arquivo
+          <input id="backgroundFile" type="file" accept="image/*" hidden />
+        </label>
+        <div id="backgroundPreview" class="admin-bg-preview"></div>
+      </section>
 
-  <section class="admin-card">
-    <h2>Personagens</h2>
-    <div id="personaList" class="admin-persona-list"></div>
-  </section>
+      <section class="admin-card">
+        <h2>Sons</h2>
+        <label class="admin-row">
+          <input id="soundsToggle" type="checkbox" checked />
+          Ativar som ao enviar/receber mensagens
+        </label>
+      </section>
 
-  <div class="admin-save-bar">
-    <div id="saveStatus" class="admin-status"></div>
-    <button id="saveBtn" class="admin-primary-btn">Salvar alterações</button>
-  </div>
+      <div class="admin-save-bar">
+        <div id="saveStatus" class="admin-status"></div>
+        <button id="saveBtn" class="admin-primary-btn">Salvar alterações</button>
+      </div>
+    </section>
+
+    <section id="tab-personas" class="admin-tab-panel" hidden>
+      <section class="admin-card">
+        <div class="admin-card-header">
+          <h2>Personagens</h2>
+          <button type="button" id="addPersonaBtn" class="admin-primary-btn">+ Adicionar personagem</button>
+        </div>
+        <div id="personaList" class="admin-persona-list"></div>
+      </section>
+
+      <div class="admin-save-bar">
+        <div id="saveStatusPersonas" class="admin-status"></div>
+        <button id="saveBtnPersonas" class="admin-primary-btn">Salvar alterações</button>
+      </div>
+    </section>
+
+    <section id="tab-flows" class="admin-tab-panel" hidden>
+      <div class="flows-shell">
+        <div id="flowsListWrap" class="flows-list-wrap">
+          <button type="button" id="newFlowBtn" class="admin-primary-btn" style="width:100%;margin-bottom:12px;">+ Novo fluxo</button>
+          <div id="flowsList"></div>
+        </div>
+
+        <div id="flowEditorWrap" class="flow-editor-wrap" hidden>
+          <div class="flow-toolbar">
+            <input id="flowNameInput" type="text" class="flow-name-input" placeholder="Nome do fluxo" />
+            <div id="flowPersonaAssign" class="flow-persona-assign"></div>
+            <div class="flow-toolbar-actions">
+              <button type="button" id="saveFlowBtn" class="admin-primary-btn">Salvar fluxo</button>
+              <button type="button" id="deleteFlowBtn" class="admin-secondary-btn">Excluir</button>
+              <button type="button" id="closeFlowEditorBtn" class="admin-secondary-btn">Fechar</button>
+            </div>
+          </div>
+          <div id="flowSaveStatus" class="admin-status"></div>
+
+          <div class="flow-editor-body">
+            <aside class="node-palette">
+              <h3>Controle</h3>
+              <div class="palette-item" draggable="true" data-node="delay">⏱ Delay</div>
+              <div class="palette-item" draggable="true" data-node="randomizer">🔀 Randomizer</div>
+              <div class="palette-item" draggable="true" data-node="wait">👤 Aguardar Resposta</div>
+              <h3>Envio de itens</h3>
+              <div class="palette-item" draggable="true" data-node="audio">🎙 Áudio</div>
+              <div class="palette-item" draggable="true" data-node="contact">👤 Contato</div>
+              <div class="palette-item" draggable="true" data-node="document">📄 Documento</div>
+              <div class="palette-item" draggable="true" data-node="media">🖼 Mídia</div>
+              <div class="palette-item" draggable="true" data-node="text">💬 Texto</div>
+            </aside>
+            <div id="drawflowCanvas" class="drawflow-canvas"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
 </div>
 
 <script src="data.js"></script>
+<script src="config-store.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/drawflow@0.0.59/dist/drawflow.min.js"></script>
+<script src="flow-editor.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

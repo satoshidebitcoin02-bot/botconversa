@@ -12,9 +12,20 @@ async function loadSiteConfig() {
   }
 }
 
+// personasList (array, CRUD completo pelo admin) tem prioridade; se não
+// existir ainda, cai no formato antigo (overrides por id fixo) ou nos
+// padrões de data.js.
 function mergedPersonas(config) {
+  if (config && Array.isArray(config.personasList) && config.personasList.length > 0) {
+    return config.personasList;
+  }
   const overrides = (config && config.personas) || {};
   return PERSONAS.map(p => ({ ...p, ...(overrides[p.id] || {}) }));
+}
+
+function findFlowForPersona(config, personaId) {
+  const flows = (config && config.flows) || {};
+  return Object.values(flows).find(f => Array.isArray(f.personaIds) && f.personaIds.includes(personaId)) || null;
 }
 
 function applyLogo(config) {

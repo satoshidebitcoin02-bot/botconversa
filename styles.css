@@ -611,6 +611,18 @@ body {
   max-width: 230px;
 }
 
+.bubble-doc {
+  display: block;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13.5px;
+}
+
+.bubble-contact {
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
 /* fixed bottom banner ad */
 .fixed-ad {
   flex: 0 0 auto;
