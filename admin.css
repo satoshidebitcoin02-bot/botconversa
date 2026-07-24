@@ -566,6 +566,9 @@ body.admin-body {
   top: auto;
 }
 
+.drawflow .drawflow-node .input { left: -10px; }
+.drawflow .drawflow-node .output { right: -8px; }
+
 .drawflow .drawflow-node .input:hover,
 .drawflow .drawflow-node .output:hover {
   background: #fff;
@@ -680,6 +683,32 @@ textarea.df-field {
   font-size: 11px;
   color: #a99fe0;
 }
+
+.df-suggest-box {
+  position: absolute;
+  z-index: 20;
+  background: #1a1729;
+  border: 1px solid #3a3455;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.df-suggest-item {
+  padding: 7px 10px;
+  font-size: 12px;
+  color: #e8e5f5;
+  cursor: pointer;
+  border-bottom: 1px solid #2a2540;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.df-suggest-item:last-child { border-bottom: none; }
+.df-suggest-item:hover { background: #2a2540; }
 
 .admin-save-bar {
   border-top: 1px solid var(--border);

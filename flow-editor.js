@@ -44,7 +44,7 @@ function deleteButtonHtml() {
 
 function nodeHtml(type, data) {
   const meta = NODE_META[type];
-  const title = `<div class="df-node-title"><span>${icon(meta.icon, 13)} ${meta.label}</span>${deleteButtonHtml()}</div>`;
+  const title = `<div class="df-node-title"><span>${meta.label}</span>${deleteButtonHtml()}</div>`;
 
   if (type === "text") {
     const buttons = data.buttons || [{ label: "" }, { label: "" }, { label: "" }, { label: "" }];
@@ -150,8 +150,75 @@ function setNestedField(obj, path, value) {
   cur[lastKey] = value;
 }
 
+// ---- sugestões de mensagem (reaproveitar frases já usadas no fluxo) ----
+function getMessageSuggestions(excludeText) {
+  if (!dfEditor) return [];
+  const data = dfEditor.export().drawflow.Home.data;
+  const set = new Set();
+  Object.values(data).forEach(n => {
+    if (n.name === "text" && n.data && n.data.message) {
+      const msg = n.data.message.trim();
+      if (msg && msg !== excludeText) set.add(msg);
+    }
+  });
+  return Array.from(set);
+}
+
+function ensureSuggestBox() {
+  let box = document.getElementById("dfSuggestBox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "dfSuggestBox";
+    box.className = "df-suggest-box";
+    box.hidden = true;
+    document.getElementById("drawflowCanvas").appendChild(box);
+  }
+  return box;
+}
+
+function showSuggestions(textarea) {
+  const typed = textarea.value.trim();
+  const suggestions = getMessageSuggestions(typed)
+    .filter(s => !typed || s.toLowerCase().includes(typed.toLowerCase()));
+  const box = ensureSuggestBox();
+  if (suggestions.length === 0) {
+    box.hidden = true;
+    return;
+  }
+  box.innerHTML = suggestions.slice(0, 6).map(s => `<div class="df-suggest-item">${s.replace(/</g, "&lt;")}</div>`).join("");
+
+  const canvasRect = document.getElementById("drawflowCanvas").getBoundingClientRect();
+  const taRect = textarea.getBoundingClientRect();
+  box.style.left = (taRect.left - canvasRect.left) + "px";
+  box.style.top = (taRect.bottom - canvasRect.top + 4) + "px";
+  box.style.width = taRect.width + "px";
+  box.hidden = false;
+
+  box.querySelectorAll(".df-suggest-item").forEach((item, i) => {
+    item.addEventListener("mousedown", ev => {
+      ev.preventDefault();
+      textarea.value = suggestions[i];
+      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+      box.hidden = true;
+    });
+  });
+}
+
+function hideSuggestions() {
+  const box = document.getElementById("dfSuggestBox");
+  if (box) box.hidden = true;
+}
+
 function bindCanvasDelegation() {
   const container = document.getElementById("drawflowCanvas");
+
+  container.addEventListener("focusin", e => {
+    if (e.target.matches('textarea.df-field[data-field="message"]')) showSuggestions(e.target);
+  });
+
+  container.addEventListener("focusout", e => {
+    if (e.target.matches('textarea.df-field[data-field="message"]')) setTimeout(hideSuggestions, 150);
+  });
 
   container.addEventListener("click", e => {
     const delBtn = e.target.closest(".df-delete-node");
@@ -174,6 +241,7 @@ function bindCanvasDelegation() {
     setNestedField(nodeData, field.dataset.field, value);
     dfEditor.updateNodeDataFromId(nodeId, nodeData);
     markFlowDirty();
+    if (field.matches('textarea.df-field[data-field="message"]')) showSuggestions(field);
   });
 
   container.addEventListener("change", async e => {
