@@ -52,6 +52,18 @@ function addMediaBubble(kind, url, who) {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
+function addCarouselBubble(urls) {
+  const row = document.createElement("div");
+  row.className = "msg-row them";
+  const imgs = urls.map(u => `<img class="carousel-img" src="${u}" alt="" />`).join("");
+  row.innerHTML = `
+    <img class="mini-avatar" src="${persona.avatar}" alt="" />
+    <div class="bubble bubble-media"><div class="carousel-track">${imgs}</div></div>
+  `;
+  messagesEl.appendChild(row);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
 function addDocumentBubble(filename, url) {
   const row = document.createElement("div");
   row.className = "msg-row them";
@@ -220,11 +232,23 @@ async function runFlowFrom(nodeId) {
       flowRuntime.waitingForReply = true;
       flowRuntime.currentNodeId = id;
       return;
-    } else if (node.name === "audio" || node.name === "media") {
+    } else if (node.name === "audio") {
       showTyping();
       await sleepRandom();
       hideTyping();
-      addMediaBubble(node.name === "audio" ? "audio" : "image", (node.data && node.data.url) || "", "them");
+      addMediaBubble("audio", (node.data && node.data.url) || "", "them");
+      playReceiveSound();
+      id = nextNodeId(node);
+    } else if (node.name === "media") {
+      showTyping();
+      await sleepRandom();
+      hideTyping();
+      const urls = (node.data && node.data.urls) || [];
+      if (urls.length > 1) {
+        addCarouselBubble(urls);
+      } else {
+        addMediaBubble("image", urls[0] || "", "them");
+      }
       playReceiveSound();
       id = nextNodeId(node);
     } else if (node.name === "document") {

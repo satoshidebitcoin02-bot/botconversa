@@ -145,6 +145,24 @@
   </main>
 </div>
 
+<div id="dfNodeModalOverlay" class="df-modal-overlay" hidden>
+  <div class="df-modal">
+    <div class="df-modal-header">
+      <h3>Editar mensagem</h3>
+      <button type="button" id="dfModalCloseBtn" class="df-modal-close" title="Fechar">×</button>
+    </div>
+    <div class="df-modal-body">
+      <label class="df-modal-label">Mensagem</label>
+      <textarea id="dfModalMessage" rows="5" placeholder="Mensagem que ela envia..."></textarea>
+      <label class="df-modal-label">Botões (opcional — deixe em branco pra não usar; se usar, o fluxo espera o clique)</label>
+      <div id="dfModalButtons" class="df-modal-buttons"></div>
+    </div>
+    <div class="df-modal-footer">
+      <button type="button" id="dfModalSaveBtn" class="admin-primary-btn">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <script src="data.js"></script>
 <script src="config-store.js"></script>
 <script src="icons.js"></script>

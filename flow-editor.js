@@ -42,22 +42,27 @@ function deleteButtonHtml() {
   return `<button type="button" class="df-delete-node" title="Remover nó">${icon("trash", 12)}</button>`;
 }
 
+function messagePreview(message) {
+  const msg = (message || "").trim();
+  if (!msg) return "(sem mensagem — clique em editar)";
+  return msg.length > 70 ? msg.slice(0, 70) + "…" : msg;
+}
+
+function buttonBadgesHtml(buttons) {
+  const filled = (buttons || []).filter(b => (b.label || "").trim());
+  if (!filled.length) return "";
+  return `<div class="df-node-badges">${filled.map(b => `<span class="df-badge">${escapeAttr(b.label).replace(/&quot;/g, '"')}</span>`).join("")}</div>`;
+}
+
 function nodeHtml(type, data) {
   const meta = NODE_META[type];
   const title = `<div class="df-node-title"><span>${meta.label}</span>${deleteButtonHtml()}</div>`;
 
   if (type === "text") {
-    const buttons = data.buttons || [{ label: "" }, { label: "" }, { label: "" }, { label: "" }];
-    const buttonRows = buttons.map((b, i) => `
-      <div class="df-row">
-        <span class="df-branch-letter">${String.fromCharCode(65 + i)}</span>
-        <input type="text" class="df-field" data-field="buttons.${i}.label" placeholder="Botão (opcional)" value="${escapeAttr(b.label)}" />
-      </div>
-    `).join("");
-    return `<div class="df-node">${title}
-      <textarea class="df-field" data-field="message" rows="3" placeholder="Mensagem que ela envia...">${data.message || ""}</textarea>
-      <div class="df-hint">Botões (opcional — deixe em branco pra não usar; se usar, o fluxo espera o clique):</div>
-      ${buttonRows}
+    return `<div class="df-node df-node-compact">${title}
+      <div class="df-node-preview">${messagePreview(data.message).replace(/</g, "&lt;")}</div>
+      ${buttonBadgesHtml(data.buttons)}
+      <button type="button" class="df-edit-btn">Editar</button>
     </div>`;
   }
   if (type === "delay") {
@@ -76,11 +81,24 @@ function nodeHtml(type, data) {
   if (type === "wait") {
     return `<div class="df-node">${title}<div class="df-hint">Espera o usuário enviar qualquer resposta antes de continuar.</div></div>`;
   }
-  if (type === "audio" || type === "media") {
-    const accept = type === "audio" ? "audio/*" : "image/*";
+  if (type === "audio") {
     return `<div class="df-node">${title}
-      <label class="df-upload-btn">${icon("folder", 12)} Enviar arquivo<input type="file" accept="${accept}" class="df-file" data-field="url" hidden /></label>
+      <label class="df-upload-btn">${icon("folder", 12)} Enviar arquivo<input type="file" accept="audio/*" class="df-file" data-field="url" hidden /></label>
       <div class="df-file-name">${data.url ? icon("check", 11) + " arquivo carregado" : "nenhum arquivo"}</div>
+    </div>`;
+  }
+  if (type === "media") {
+    const urls = data.urls || [];
+    const thumbs = urls.map((u, i) => `
+      <div class="df-thumb-wrap">
+        <img class="df-thumb" src="${u}" alt="" />
+        <button type="button" class="df-thumb-remove" data-idx="${i}" title="Remover">×</button>
+      </div>
+    `).join("");
+    return `<div class="df-node">${title}
+      <label class="df-upload-btn">${icon("folder", 12)} Adicionar imagem<input type="file" accept="image/*" class="df-file-multi" hidden /></label>
+      <div class="df-hint">${urls.length > 1 ? "Vira um carrossel no chat" : "Adicione mais de uma pra virar carrossel"}</div>
+      <div class="df-media-thumbs">${thumbs}</div>
     </div>`;
   }
   if (type === "document") {
@@ -102,7 +120,7 @@ function initDrawflow() {
   if (dfEditor) return;
   const container = document.getElementById("drawflowCanvas");
   dfEditor = new Drawflow(container);
-  dfEditor.reroute = true;
+  dfEditor.reroute = false;
   dfEditor.start();
 
   dfEditor.on("connectionCreated", markFlowDirty);
@@ -122,7 +140,9 @@ function addNodeToCanvas(type, clientX, clientY) {
   if (type === "randomizer") {
     initialData = { branches: [{ weight: 25 }, { weight: 25 }, { weight: 25 }, { weight: 25 }] };
   } else if (type === "text") {
-    initialData = { buttons: [{ label: "" }, { label: "" }, { label: "" }, { label: "" }] };
+    initialData = { message: "", buttons: [{ label: "" }, { label: "" }, { label: "" }, { label: "" }] };
+  } else if (type === "media") {
+    initialData = { urls: [] };
   }
 
   dfEditor.addNode(
@@ -171,7 +191,7 @@ function ensureSuggestBox() {
     box.id = "dfSuggestBox";
     box.className = "df-suggest-box";
     box.hidden = true;
-    document.getElementById("drawflowCanvas").appendChild(box);
+    document.getElementById("dfModalMessage").insertAdjacentElement("afterend", box);
   }
   return box;
 }
@@ -186,19 +206,12 @@ function showSuggestions(textarea) {
     return;
   }
   box.innerHTML = suggestions.slice(0, 6).map(s => `<div class="df-suggest-item">${s.replace(/</g, "&lt;")}</div>`).join("");
-
-  const canvasRect = document.getElementById("drawflowCanvas").getBoundingClientRect();
-  const taRect = textarea.getBoundingClientRect();
-  box.style.left = (taRect.left - canvasRect.left) + "px";
-  box.style.top = (taRect.bottom - canvasRect.top + 4) + "px";
-  box.style.width = taRect.width + "px";
   box.hidden = false;
 
   box.querySelectorAll(".df-suggest-item").forEach((item, i) => {
     item.addEventListener("mousedown", ev => {
       ev.preventDefault();
       textarea.value = suggestions[i];
-      textarea.dispatchEvent(new Event("input", { bubbles: true }));
       box.hidden = true;
     });
   });
@@ -209,25 +222,102 @@ function hideSuggestions() {
   if (box) box.hidden = true;
 }
 
+// ---- modal de edição do nó Texto ----
+let editingNodeId = null;
+
+function openTextNodeModal(nodeId) {
+  editingNodeId = nodeId;
+  const nodeData = dfEditor.getNodeFromId(nodeId).data;
+  const buttons = nodeData.buttons || [{ label: "" }, { label: "" }, { label: "" }, { label: "" }];
+
+  document.getElementById("dfModalMessage").value = nodeData.message || "";
+  document.getElementById("dfModalButtons").innerHTML = buttons.map((b, i) => `
+    <div class="df-row">
+      <span class="df-branch-letter">${String.fromCharCode(65 + i)}</span>
+      <input type="text" class="df-modal-btn-field" data-idx="${i}" placeholder="Botão (opcional)" value="${escapeAttr(b.label)}" />
+    </div>
+  `).join("");
+
+  document.getElementById("dfNodeModalOverlay").hidden = false;
+  document.getElementById("dfModalMessage").focus();
+}
+
+function closeNodeModal() {
+  document.getElementById("dfNodeModalOverlay").hidden = true;
+  hideSuggestions();
+  editingNodeId = null;
+}
+
+function updateTextNodeCard(nodeId, data) {
+  const nodeEl = document.getElementById("node-" + nodeId);
+  if (!nodeEl) return;
+  const previewEl = nodeEl.querySelector(".df-node-preview");
+  if (previewEl) previewEl.textContent = messagePreview(data.message);
+
+  let badgesEl = nodeEl.querySelector(".df-node-badges");
+  const badgesHtml = buttonBadgesHtml(data.buttons);
+  if (badgesEl) {
+    badgesEl.outerHTML = badgesHtml || "";
+  } else if (badgesHtml) {
+    previewEl.insertAdjacentHTML("afterend", badgesHtml);
+  }
+}
+
+function saveNodeModal() {
+  if (!editingNodeId) return;
+  const nodeData = dfEditor.getNodeFromId(editingNodeId).data;
+  nodeData.message = document.getElementById("dfModalMessage").value;
+  nodeData.buttons = Array.from(document.querySelectorAll("#dfModalButtons .df-modal-btn-field"))
+    .map(inp => ({ label: inp.value }));
+  dfEditor.updateNodeDataFromId(editingNodeId, nodeData);
+  markFlowDirty();
+  updateTextNodeCard(editingNodeId, nodeData);
+  closeNodeModal();
+}
+
+function bindModal() {
+  document.getElementById("dfModalCloseBtn").addEventListener("click", closeNodeModal);
+  document.getElementById("dfModalSaveBtn").addEventListener("click", saveNodeModal);
+  document.getElementById("dfNodeModalOverlay").addEventListener("mousedown", e => {
+    if (e.target.id === "dfNodeModalOverlay") closeNodeModal();
+  });
+  const msgField = document.getElementById("dfModalMessage");
+  msgField.addEventListener("focus", () => showSuggestions(msgField));
+  msgField.addEventListener("input", () => showSuggestions(msgField));
+  msgField.addEventListener("blur", () => setTimeout(hideSuggestions, 150));
+}
+
 function bindCanvasDelegation() {
   const container = document.getElementById("drawflowCanvas");
 
-  container.addEventListener("focusin", e => {
-    if (e.target.matches('textarea.df-field[data-field="message"]')) showSuggestions(e.target);
-  });
-
-  container.addEventListener("focusout", e => {
-    if (e.target.matches('textarea.df-field[data-field="message"]')) setTimeout(hideSuggestions, 150);
-  });
-
   container.addEventListener("click", e => {
+    const editBtn = e.target.closest(".df-edit-btn");
+    if (editBtn) {
+      const nodeEl = editBtn.closest(".drawflow-node");
+      openTextNodeModal(nodeEl.id.replace("node-", ""));
+      return;
+    }
+
+    const thumbRemove = e.target.closest(".df-thumb-remove");
+    if (thumbRemove) {
+      const nodeEl = thumbRemove.closest(".drawflow-node");
+      const nodeId = nodeEl.id.replace("node-", "");
+      const nodeData = dfEditor.getNodeFromId(nodeId).data;
+      nodeData.urls.splice(Number(thumbRemove.dataset.idx), 1);
+      dfEditor.updateNodeDataFromId(nodeId, nodeData);
+      nodeEl.querySelector(".df-node").outerHTML = nodeHtml("media", nodeData);
+      markFlowDirty();
+      return;
+    }
+
     const delBtn = e.target.closest(".df-delete-node");
-    if (!delBtn) return;
-    const nodeEl = delBtn.closest(".drawflow-node");
-    if (!nodeEl) return;
-    const nodeId = nodeEl.id.replace("node-", "");
-    dfEditor.removeNodeId("node-" + nodeId);
-    markFlowDirty();
+    if (delBtn) {
+      const nodeEl = delBtn.closest(".drawflow-node");
+      if (!nodeEl) return;
+      const nodeId = nodeEl.id.replace("node-", "");
+      dfEditor.removeNodeId("node-" + nodeId);
+      markFlowDirty();
+    }
   });
 
   container.addEventListener("input", e => {
@@ -241,15 +331,28 @@ function bindCanvasDelegation() {
     setNestedField(nodeData, field.dataset.field, value);
     dfEditor.updateNodeDataFromId(nodeId, nodeData);
     markFlowDirty();
-    if (field.matches('textarea.df-field[data-field="message"]')) showSuggestions(field);
   });
 
   container.addEventListener("change", async e => {
+    const nodeEl = e.target.closest(".drawflow-node");
+    if (!nodeEl) return;
+    const nodeId = nodeEl.id.replace("node-", "");
+
+    if (e.target.classList.contains("df-file-multi")) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const nodeData = dfEditor.getNodeFromId(nodeId).data;
+      const dataUrl = await readFileAsDataUrl(file);
+      nodeData.urls = [...(nodeData.urls || []), dataUrl];
+      dfEditor.updateNodeDataFromId(nodeId, nodeData);
+      nodeEl.querySelector(".df-node").outerHTML = nodeHtml("media", nodeData);
+      markFlowDirty();
+      return;
+    }
+
     if (!e.target.classList.contains("df-file")) return;
     const file = e.target.files[0];
     if (!file) return;
-    const nodeEl = e.target.closest(".drawflow-node");
-    const nodeId = nodeEl.id.replace("node-", "");
     const nodeData = dfEditor.getNodeFromId(nodeId).data;
     const dataUrl = await readFileAsDataUrl(file);
     nodeData.url = dataUrl;
@@ -363,6 +466,7 @@ function deleteCurrentFlow() {
 function initFlowsTab() {
   bindPaletteDragDrop();
   bindCanvasDelegation();
+  bindModal();
   document.getElementById("newFlowBtnSidebar").addEventListener("click", createNewFlow);
   document.getElementById("newFlowBtnEditor").addEventListener("click", createNewFlow);
   document.getElementById("saveFlowBtn").addEventListener("click", saveCurrentFlow);

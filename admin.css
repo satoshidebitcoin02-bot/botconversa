@@ -532,6 +532,7 @@ body.admin-body {
   box-shadow: none;
   min-height: 0;
   width: auto;
+  align-items: flex-start;
 }
 
 /* o Drawflow pinta o nó selecionado de vermelho por padrão — cancela isso
@@ -551,8 +552,8 @@ body.admin-body {
 .drawflow .drawflow-node .outputs {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   gap: 8px;
+  margin-top: 15px;
 }
 
 .drawflow .drawflow-node .input,
@@ -647,6 +648,204 @@ textarea.df-field {
   height: 60px;
 }
 
+/* card compacto (nó Texto) */
+.df-node-preview {
+  color: #cfc9e8;
+  font-size: 12px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+.df-node-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.df-badge {
+  background: #3a3455;
+  color: #cbb8ff;
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.df-edit-btn {
+  width: 100%;
+  background: #3a3455;
+  color: #fff;
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.df-edit-btn:hover { background: #4a4370; }
+
+/* miniaturas de imagem (nó Mídia) */
+.df-media-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.df-thumb-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+
+.df-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.df-thumb-remove {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #e0245e;
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* modal de edição de nó */
+.df-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 5, 20, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.df-modal {
+  width: min(480px, 92vw);
+  max-height: 85vh;
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+}
+
+.df-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.df-modal-header h3 { margin: 0; font-size: 16px; }
+
+.df-modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-dim);
+  padding: 4px;
+}
+
+.df-modal-body {
+  padding: 16px 18px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.df-modal-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin: 14px 0 6px;
+}
+
+.df-modal-label:first-child { margin-top: 0; }
+
+#dfModalMessage {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 90px;
+}
+
+.df-modal-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.df-modal-buttons .df-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.df-modal-btn-field {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.df-modal-footer {
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+#dfSuggestBox {
+  position: absolute;
+  z-index: 20;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  max-height: 160px;
+  overflow-y: auto;
+  width: 100%;
+  margin-top: 2px;
+}
+
+#dfSuggestBox .df-suggest-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#dfSuggestBox .df-suggest-item:last-child { border-bottom: none; }
+#dfSuggestBox .df-suggest-item:hover { background: var(--bg-alt); }
+
 .df-row {
   display: flex;
   align-items: center;
@@ -684,31 +883,6 @@ textarea.df-field {
   color: #a99fe0;
 }
 
-.df-suggest-box {
-  position: absolute;
-  z-index: 20;
-  background: #1a1729;
-  border: 1px solid #3a3455;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.4);
-  max-height: 160px;
-  overflow-y: auto;
-}
-
-.df-suggest-item {
-  padding: 7px 10px;
-  font-size: 12px;
-  color: #e8e5f5;
-  cursor: pointer;
-  border-bottom: 1px solid #2a2540;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.df-suggest-item:last-child { border-bottom: none; }
-.df-suggest-item:hover { background: #2a2540; }
 
 .admin-save-bar {
   border-top: 1px solid var(--border);

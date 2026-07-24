@@ -617,6 +617,24 @@ body {
   max-width: 230px;
 }
 
+.carousel-track {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  max-width: 240px;
+  border-radius: 16px;
+}
+
+.carousel-img {
+  width: 200px;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 16px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
+
 .bubble-doc {
   display: block;
   color: var(--text);
