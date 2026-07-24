@@ -228,7 +228,9 @@ let editingNodeId = null;
 function openTextNodeModal(nodeId) {
   editingNodeId = nodeId;
   const nodeData = dfEditor.getNodeFromId(nodeId).data;
-  const buttons = nodeData.buttons || [{ label: "" }, { label: "" }, { label: "" }, { label: "" }];
+  const buttons = (nodeData.buttons && nodeData.buttons.length)
+    ? nodeData.buttons
+    : [{ label: "" }, { label: "" }, { label: "" }, { label: "" }];
 
   document.getElementById("dfModalMessage").value = nodeData.message || "";
   document.getElementById("dfModalButtons").innerHTML = buttons.map((b, i) => `
@@ -280,6 +282,9 @@ function bindModal() {
   document.getElementById("dfModalSaveBtn").addEventListener("click", saveNodeModal);
   document.getElementById("dfNodeModalOverlay").addEventListener("mousedown", e => {
     if (e.target.id === "dfNodeModalOverlay") closeNodeModal();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !document.getElementById("dfNodeModalOverlay").hidden) closeNodeModal();
   });
   const msgField = document.getElementById("dfModalMessage");
   msgField.addEventListener("focus", () => showSuggestions(msgField));
