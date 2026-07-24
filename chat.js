@@ -1,6 +1,7 @@
 // Página de conversa — chat com uma persona de IA (sempre rotulada como IA).
-// Suporta um fluxo de botões estilo ManyChat (persona.flow.nodes[]); texto
-// livre digitado pelo usuário sempre cai na IA/roteiro simulado.
+// Fluxo de botões estilo ManyChat (persona.flow.nodes[]) é o mecanismo
+// principal. Não há IA externa conectada — texto livre cai só no roteiro
+// simulado local (data.js).
 
 const params = new URLSearchParams(location.search);
 const personaId = params.get("id");
@@ -19,20 +20,8 @@ const AD_EVERY_N_AI_MESSAGES = 4; // mostra um anúncio intersticial a cada N me
 const history = []; // histórico enviado pra API (role: "user" | "assistant")
 
 async function fetchAiReply(text) {
-  try {
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ persona, history, userMessage: text }),
-    });
-    if (!res.ok) throw new Error("api error");
-    const data = await res.json();
-    if (!data.reply) throw new Error("sem reply");
-    return data.reply;
-  } catch (err) {
-    // fallback pro roteiro simulado caso a API/chave não esteja configurada
-    return generateReply(text);
-  }
+  // sem IA externa conectada — usa direto o roteiro simulado local
+  return generateReply(text);
 }
 
 function addBubble(text, who) {
