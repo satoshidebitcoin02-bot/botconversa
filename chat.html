@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
+<title>Conversa — IA Companion</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="phone">
+  <div class="chat-header">
+    <a href="index.html" class="back">←</a>
+    <img id="hdrAvatar" src="" alt="" />
+    <div class="info">
+      <div class="name-row">
+        <span id="hdrName">—</span>
+        <span class="ai-pill">IA</span>
+      </div>
+      <div class="status" id="hdrStatus">personagem de inteligência artificial</div>
+    </div>
+  </div>
+
+  <div class="chat-disclosure">
+    Você está conversando com um <strong>personagem gerado por IA</strong>, não com uma pessoa real. As respostas são simuladas.
+  </div>
+
+  <div class="messages" id="messages"></div>
+
+  <div class="composer">
+    <input id="msgInput" type="text" placeholder="Aa" autocomplete="off" />
+    <button id="sendBtn">➤</button>
+  </div>
+
+  <div class="fixed-ad">
+    <span><span class="label">AD</span>Streaming+ — filmes ilimitados por R$9,90/mês</span>
+    <span>▸</span>
+  </div>
+</div>
+
+<div class="ad-overlay" id="adOverlay">
+  <div class="ad-modal">
+    <div class="ad-banner-big" id="adBigTitle">Anúncio</div>
+    <div class="ad-body">
+      <p id="adBigBody">Conteúdo patrocinado</p>
+      <button id="adCloseBtn" disabled>Fechar (5)</button>
+      <div class="countdown">Você pode fechar o anúncio em instantes</div>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="viewport-fix.js"></script>
+<script src="chat.js"></script>
+</body>
+</html>
