@@ -1,9 +1,22 @@
+const setupScreen = document.getElementById("setupScreen");
+const setupPasswordInput = document.getElementById("setupPasswordInput");
+const setupPasswordConfirm = document.getElementById("setupPasswordConfirm");
+const setupBtn = document.getElementById("setupBtn");
+const setupError = document.getElementById("setupError");
+
 const loginScreen = document.getElementById("loginScreen");
 const adminPanel = document.getElementById("adminPanel");
 const passwordInput = document.getElementById("passwordInput");
 const loginBtn = document.getElementById("loginBtn");
 const loginError = document.getElementById("loginError");
 const logoutBtn = document.getElementById("logoutBtn");
+
+const changePasswordBtn = document.getElementById("changePasswordBtn");
+const changePasswordCard = document.getElementById("changePasswordCard");
+const currentPasswordInput = document.getElementById("currentPasswordInput");
+const newPasswordInput = document.getElementById("newPasswordInput");
+const submitChangePasswordBtn = document.getElementById("submitChangePasswordBtn");
+const changePasswordStatus = document.getElementById("changePasswordStatus");
 
 const logoTextInput = document.getElementById("logoTextInput");
 const logoImageInput = document.getElementById("logoImageInput");
@@ -20,11 +33,24 @@ function adminPassword() {
   return sessionStorage.getItem("adminPassword") || "";
 }
 
+function hideAllScreens() {
+  setupScreen.hidden = true;
+  loginScreen.hidden = true;
+  adminPanel.hidden = true;
+}
+
 async function verifyPassword(pwd) {
   const res = await fetch("/api/admin-verify", {
     headers: { "x-admin-password": pwd },
   });
   return res.ok;
+}
+
+async function enterPanel(pwd) {
+  sessionStorage.setItem("adminPassword", pwd);
+  hideAllScreens();
+  adminPanel.hidden = false;
+  await loadConfig();
 }
 
 async function loadConfig() {
@@ -149,6 +175,41 @@ async function save() {
 
 saveBtn.addEventListener("click", save);
 
+// ---- criar senha (primeiro acesso) ----
+async function doSetup() {
+  setupError.textContent = "";
+  const pwd = setupPasswordInput.value;
+  const confirm = setupPasswordConfirm.value;
+  if (pwd.length < 6) {
+    setupError.textContent = "A senha precisa ter pelo menos 6 caracteres.";
+    return;
+  }
+  if (pwd !== confirm) {
+    setupError.textContent = "As senhas não coincidem.";
+    return;
+  }
+  setupBtn.disabled = true;
+  try {
+    const res = await fetch("/api/admin-setup", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ newPassword: pwd }),
+    });
+    if (!res.ok) throw new Error();
+    await enterPanel(pwd);
+  } catch {
+    setupError.textContent = "Erro ao criar senha. Tente novamente.";
+  } finally {
+    setupBtn.disabled = false;
+  }
+}
+
+setupBtn.addEventListener("click", doSetup);
+setupPasswordConfirm.addEventListener("keydown", e => {
+  if (e.key === "Enter") doSetup();
+});
+
+// ---- login ----
 async function tryLogin() {
   const pwd = passwordInput.value;
   loginError.textContent = "";
@@ -159,10 +220,7 @@ async function tryLogin() {
     loginError.textContent = "Senha incorreta.";
     return;
   }
-  sessionStorage.setItem("adminPassword", pwd);
-  loginScreen.hidden = true;
-  adminPanel.hidden = false;
-  await loadConfig();
+  await enterPanel(pwd);
 }
 
 loginBtn.addEventListener("click", tryLogin);
@@ -175,16 +233,64 @@ logoutBtn.addEventListener("click", () => {
   location.reload();
 });
 
-// tenta reaproveitar sessão já autenticada
+// ---- trocar senha (dentro do painel) ----
+changePasswordBtn.addEventListener("click", () => {
+  changePasswordCard.hidden = !changePasswordCard.hidden;
+  changePasswordStatus.textContent = "";
+});
+
+submitChangePasswordBtn.addEventListener("click", async () => {
+  changePasswordStatus.className = "admin-error";
+  const current = currentPasswordInput.value;
+  const next = newPasswordInput.value;
+  if (next.length < 6) {
+    changePasswordStatus.textContent = "A nova senha precisa ter pelo menos 6 caracteres.";
+    return;
+  }
+  try {
+    const res = await fetch("/api/admin-setup", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ currentPassword: current, newPassword: next }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      changePasswordStatus.textContent = data.error || "Erro ao trocar senha.";
+      return;
+    }
+    sessionStorage.setItem("adminPassword", next);
+    changePasswordStatus.className = "admin-status success";
+    changePasswordStatus.textContent = "Senha alterada com sucesso!";
+    currentPasswordInput.value = "";
+    newPasswordInput.value = "";
+  } catch {
+    changePasswordStatus.textContent = "Erro ao trocar senha.";
+  }
+});
+
+// ---- inicialização ----
 (async function init() {
+  const statusRes = await fetch("/api/admin-status");
+  const status = statusRes.ok ? await statusRes.json() : { hasPassword: false };
+
+  if (!status.hasPassword) {
+    hideAllScreens();
+    setupScreen.hidden = false;
+    return;
+  }
+
   const stored = adminPassword();
-  if (!stored) return;
-  const ok = await verifyPassword(stored);
-  if (ok) {
-    loginScreen.hidden = true;
-    adminPanel.hidden = false;
-    await loadConfig();
-  } else {
+  if (stored) {
+    const ok = await verifyPassword(stored);
+    if (ok) {
+      hideAllScreens();
+      adminPanel.hidden = false;
+      await loadConfig();
+      return;
+    }
     sessionStorage.removeItem("adminPassword");
   }
+
+  hideAllScreens();
+  loginScreen.hidden = false;
 })();

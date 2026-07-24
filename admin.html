@@ -9,7 +9,18 @@
 </head>
 <body class="admin-body">
 
-<div id="loginScreen" class="admin-login">
+<div id="setupScreen" class="admin-login" hidden>
+  <div class="admin-login-card">
+    <h1>Criar senha do painel</h1>
+    <p>Primeiro acesso — defina a senha que vai usar daqui pra frente. Fica salva direto no site, sem precisar de terminal.</p>
+    <input id="setupPasswordInput" type="password" placeholder="Nova senha (mín. 6 caracteres)" autocomplete="new-password" />
+    <input id="setupPasswordConfirm" type="password" placeholder="Confirmar senha" autocomplete="new-password" />
+    <button id="setupBtn">Criar senha</button>
+    <div id="setupError" class="admin-error"></div>
+  </div>
+</div>
+
+<div id="loginScreen" class="admin-login" hidden>
   <div class="admin-login-card">
     <h1>Painel Admin</h1>
     <p>Digite a senha de administrador para continuar.</p>
@@ -22,8 +33,19 @@
 <div id="adminPanel" class="admin-wrap" hidden>
   <header class="admin-header">
     <h1>Painel Admin</h1>
-    <button id="logoutBtn" class="admin-secondary-btn">Sair</button>
+    <div class="admin-header-actions">
+      <button id="changePasswordBtn" class="admin-secondary-btn">Trocar senha</button>
+      <button id="logoutBtn" class="admin-secondary-btn">Sair</button>
+    </div>
   </header>
+
+  <section id="changePasswordCard" class="admin-card" hidden>
+    <h2>Trocar senha</h2>
+    <input id="currentPasswordInput" type="password" placeholder="Senha atual" autocomplete="current-password" />
+    <input id="newPasswordInput" type="password" placeholder="Nova senha (mín. 6 caracteres)" autocomplete="new-password" />
+    <button id="submitChangePasswordBtn" class="admin-primary-btn" style="margin-top:8px;">Confirmar troca</button>
+    <div id="changePasswordStatus" class="admin-error"></div>
+  </section>
 
   <section class="admin-card">
     <h2>Logo do app</h2>

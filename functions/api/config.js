@@ -1,7 +1,9 @@
 // Guarda a configuração do painel admin (logo, personas, fundo, sons) no
 // Cloudflare KV, compartilhada com todo mundo que acessa o site.
-// Configurar a senha do painel uma vez com:
-//   npx wrangler pages secret put ADMIN_PASSWORD --project-name=ia-companion-chat
+// A senha do painel é definida direto pelo navegador em admin.html
+// (primeiro acesso), sem precisar de wrangler secret nem de novo deploy.
+
+import { verifyAdminPassword } from "../_lib/auth.js";
 
 const KV_KEY = "site-config";
 
@@ -17,7 +19,8 @@ export async function onRequestPost(context) {
   const { request, env } = context;
 
   const password = request.headers.get("x-admin-password") || "";
-  if (!env.ADMIN_PASSWORD || password !== env.ADMIN_PASSWORD) {
+  const ok = await verifyAdminPassword(env, password);
+  if (!ok) {
     return new Response(JSON.stringify({ error: "senha inválida" }), {
       status: 401,
       headers: { "content-type": "application/json" },
