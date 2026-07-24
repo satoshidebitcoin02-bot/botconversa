@@ -18,11 +18,11 @@
     <h2>Logo do app</h2>
     <div class="admin-row">
       <label><input type="radio" name="logoType" value="text" checked /> Texto</label>
-      <label><input type="radio" name="logoType" value="image" /> Imagem (URL)</label>
+      <label><input type="radio" name="logoType" value="image" /> Imagem</label>
     </div>
     <input id="logoTextInput" type="text" placeholder="Texto do logo (ex: chats)" />
     <div id="logoImageGroup" hidden>
-      <input id="logoImageInput" type="text" placeholder="URL da imagem do logo" />
+      <input id="logoImageInput" type="hidden" />
       <label class="admin-upload-btn">
         📁 Enviar arquivo
         <input id="logoImageFile" type="file" accept="image/*" hidden />
@@ -32,7 +32,7 @@
 
   <section class="admin-card">
     <h2>Fundo da conversa</h2>
-    <input id="backgroundInput" type="text" placeholder="URL da imagem de fundo" />
+    <input id="backgroundInput" type="hidden" />
     <label class="admin-upload-btn">
       📁 Enviar arquivo
       <input id="backgroundFile" type="file" accept="image/*" hidden />

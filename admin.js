@@ -58,8 +58,8 @@ function populateForm() {
             <input type="text" class="p-name" value="${name.replace(/"/g, "&quot;")}" />
           </div>
           <div>
-            <label>Foto (URL ou arquivo)</label>
-            <input type="text" class="p-avatar" value="${avatar.replace(/"/g, "&quot;")}" />
+            <label>Foto</label>
+            <input type="hidden" class="p-avatar" value="${avatar.replace(/"/g, "&quot;")}" />
             <label class="admin-upload-btn">
               📁 Enviar arquivo
               <input type="file" accept="image/*" class="p-avatar-file" hidden />
