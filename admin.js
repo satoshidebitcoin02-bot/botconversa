@@ -1,6 +1,9 @@
 const logoTextInput = document.getElementById("logoTextInput");
+const logoImageGroup = document.getElementById("logoImageGroup");
 const logoImageInput = document.getElementById("logoImageInput");
+const logoImageFile = document.getElementById("logoImageFile");
 const backgroundInput = document.getElementById("backgroundInput");
+const backgroundFile = document.getElementById("backgroundFile");
 const backgroundPreview = document.getElementById("backgroundPreview");
 const soundsToggle = document.getElementById("soundsToggle");
 const personaList = document.getElementById("personaList");
@@ -8,6 +11,15 @@ const saveBtn = document.getElementById("saveBtn");
 const saveStatus = document.getElementById("saveStatus");
 
 let currentConfig = {};
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 async function loadConfig() {
   const res = await fetch("/api/config");
@@ -20,7 +32,7 @@ function populateForm() {
   document.querySelector(`input[name="logoType"][value="${logo.type}"]`).checked = true;
   if (logo.type === "image") {
     logoImageInput.value = logo.value || "";
-    logoImageInput.hidden = false;
+    logoImageGroup.hidden = false;
     logoTextInput.hidden = true;
   } else {
     logoTextInput.value = logo.value || "chats";
@@ -46,8 +58,12 @@ function populateForm() {
             <input type="text" class="p-name" value="${name.replace(/"/g, "&quot;")}" />
           </div>
           <div>
-            <label>Foto (URL)</label>
+            <label>Foto (URL ou arquivo)</label>
             <input type="text" class="p-avatar" value="${avatar.replace(/"/g, "&quot;")}" />
+            <label class="admin-upload-btn">
+              📁 Enviar arquivo
+              <input type="file" accept="image/*" class="p-avatar-file" hidden />
+            </label>
           </div>
           <div>
             <label>Primeira mensagem</label>
@@ -64,6 +80,17 @@ function populateForm() {
       img.src = input.value;
     });
   });
+
+  personaList.querySelectorAll(".p-avatar-file").forEach(fileInput => {
+    fileInput.addEventListener("change", async () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      const dataUrl = await readFileAsDataUrl(file);
+      const card = fileInput.closest(".admin-persona-card");
+      card.querySelector(".p-avatar").value = dataUrl;
+      card.querySelector("img").src = dataUrl;
+    });
+  });
 }
 
 function updateBgPreview() {
@@ -74,10 +101,23 @@ function updateBgPreview() {
 
 backgroundInput.addEventListener("input", updateBgPreview);
 
+backgroundFile.addEventListener("change", async () => {
+  const file = backgroundFile.files[0];
+  if (!file) return;
+  backgroundInput.value = await readFileAsDataUrl(file);
+  updateBgPreview();
+});
+
+logoImageFile.addEventListener("change", async () => {
+  const file = logoImageFile.files[0];
+  if (!file) return;
+  logoImageInput.value = await readFileAsDataUrl(file);
+});
+
 document.querySelectorAll('input[name="logoType"]').forEach(radio => {
   radio.addEventListener("change", () => {
     const isImage = document.querySelector('input[name="logoType"]:checked').value === "image";
-    logoImageInput.hidden = !isImage;
+    logoImageGroup.hidden = !isImage;
     logoTextInput.hidden = isImage;
   });
 });

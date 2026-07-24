@@ -21,12 +21,22 @@
       <label><input type="radio" name="logoType" value="image" /> Imagem (URL)</label>
     </div>
     <input id="logoTextInput" type="text" placeholder="Texto do logo (ex: chats)" />
-    <input id="logoImageInput" type="text" placeholder="URL da imagem do logo" hidden />
+    <div id="logoImageGroup" hidden>
+      <input id="logoImageInput" type="text" placeholder="URL da imagem do logo" />
+      <label class="admin-upload-btn">
+        📁 Enviar arquivo
+        <input id="logoImageFile" type="file" accept="image/*" hidden />
+      </label>
+    </div>
   </section>
 
   <section class="admin-card">
     <h2>Fundo da conversa</h2>
     <input id="backgroundInput" type="text" placeholder="URL da imagem de fundo" />
+    <label class="admin-upload-btn">
+      📁 Enviar arquivo
+      <input id="backgroundFile" type="file" accept="image/*" hidden />
+    </label>
     <div id="backgroundPreview" class="admin-bg-preview"></div>
   </section>
 
