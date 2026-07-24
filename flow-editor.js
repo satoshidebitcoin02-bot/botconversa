@@ -7,14 +7,14 @@ let dfEditor = null;
 let currentFlowId = null;
 
 const NODE_META = {
-  delay: { title: "⏱ Delay", inputs: 1, outputs: 1 },
-  randomizer: { title: "🔀 Randomizer", inputs: 1, outputs: 4 },
-  wait: { title: "👤 Aguardar Resposta", inputs: 1, outputs: 1 },
-  audio: { title: "🎙 Áudio", inputs: 1, outputs: 1 },
-  contact: { title: "👤 Contato", inputs: 1, outputs: 1 },
-  document: { title: "📄 Documento", inputs: 1, outputs: 1 },
-  media: { title: "🖼 Mídia", inputs: 1, outputs: 1 },
-  text: { title: "💬 Texto", inputs: 1, outputs: 1 },
+  delay: { icon: "clock", label: "Delay", inputs: 1, outputs: 1 },
+  randomizer: { icon: "shuffle", label: "Randomizer", inputs: 1, outputs: 4 },
+  wait: { icon: "user-clock", label: "Aguardar Resposta", inputs: 1, outputs: 1 },
+  audio: { icon: "mic", label: "Áudio", inputs: 1, outputs: 1 },
+  contact: { icon: "user", label: "Contato", inputs: 1, outputs: 1 },
+  document: { icon: "file-text", label: "Documento", inputs: 1, outputs: 1 },
+  media: { icon: "image", label: "Mídia", inputs: 1, outputs: 1 },
+  text: { icon: "message", label: "Texto", inputs: 1, outputs: 1 },
 };
 
 function escapeAttr(str) {
@@ -23,7 +23,7 @@ function escapeAttr(str) {
 
 function nodeHtml(type, data) {
   const meta = NODE_META[type];
-  const title = `<div class="df-node-title">${meta.title}</div>`;
+  const title = `<div class="df-node-title">${icon(meta.icon, 13)} ${meta.label}</div>`;
 
   if (type === "text") {
     return `<div class="df-node">${title}<textarea class="df-field" data-field="message" rows="3" placeholder="Mensagem que ela envia...">${data.message || ""}</textarea></div>`;
@@ -47,14 +47,14 @@ function nodeHtml(type, data) {
   if (type === "audio" || type === "media") {
     const accept = type === "audio" ? "audio/*" : "image/*";
     return `<div class="df-node">${title}
-      <label class="df-upload-btn">📁 Enviar arquivo<input type="file" accept="${accept}" class="df-file" data-field="url" hidden /></label>
-      <div class="df-file-name">${data.url ? "✅ arquivo carregado" : "nenhum arquivo"}</div>
+      <label class="df-upload-btn">${icon("folder", 12)} Enviar arquivo<input type="file" accept="${accept}" class="df-file" data-field="url" hidden /></label>
+      <div class="df-file-name">${data.url ? icon("check", 11) + " arquivo carregado" : "nenhum arquivo"}</div>
     </div>`;
   }
   if (type === "document") {
     return `<div class="df-node">${title}
-      <label class="df-upload-btn">📁 Enviar arquivo<input type="file" class="df-file" data-field="url" data-filename-field="filename" hidden /></label>
-      <div class="df-file-name">${data.filename ? "📄 " + data.filename : "nenhum arquivo"}</div>
+      <label class="df-upload-btn">${icon("folder", 12)} Enviar arquivo<input type="file" class="df-file" data-field="url" data-filename-field="filename" hidden /></label>
+      <div class="df-file-name">${data.filename ? icon("file-text", 11) + " " + data.filename : "nenhum arquivo"}</div>
     </div>`;
   }
   if (type === "contact") {
@@ -136,7 +136,7 @@ function bindCanvasDelegation() {
     if (e.target.dataset.filenameField) nodeData.filename = file.name;
     dfEditor.updateNodeDataFromId(nodeId, nodeData);
     const label = nodeEl.querySelector(".df-file-name");
-    if (label) label.textContent = e.target.dataset.filenameField ? "📄 " + file.name : "✅ arquivo carregado";
+    if (label) label.innerHTML = e.target.dataset.filenameField ? icon("file-text", 11) + " " + file.name : icon("check", 11) + " arquivo carregado";
   });
 }
 
@@ -160,12 +160,12 @@ function renderFlowsList() {
   const list = document.getElementById("flowsList");
   const flows = Object.values(flowsDraft);
   if (flows.length === 0) {
-    list.innerHTML = `<p class="admin-status">Nenhum fluxo criado ainda.</p>`;
+    list.innerHTML = `<p class="flows-empty">Nenhum fluxo criado ainda. Clique em "+ Novo fluxo" pra começar.</p>`;
     return;
   }
   list.innerHTML = flows.map(f => `
-    <div class="flow-list-item ${f.id === currentFlowId ? "active" : ""}" data-flow-id="${f.id}">
-      <span>${f.name || "(sem nome)"}</span>
+    <div class="flow-list-item" data-flow-id="${f.id}">
+      <span class="flow-list-item-name">${icon("shuffle", 15)} ${f.name || "(sem nome)"}</span>
       <span class="flow-persona-count">${(f.personaIds || []).length} personagem(ns)</span>
     </div>
   `).join("");
@@ -193,11 +193,11 @@ function openFlow(flowId) {
   currentFlowId = flowId;
   const flow = flowsDraft[flowId];
 
+  document.getElementById("flowsListView").hidden = true;
   document.getElementById("flowEditorWrap").hidden = false;
   document.getElementById("flowNameInput").value = flow.name || "";
   document.getElementById("flowSaveStatus").textContent = "";
   renderPersonaAssign(flow.personaIds || []);
-  renderFlowsList();
 
   initDrawflow();
   dfEditor.clear();
@@ -218,7 +218,6 @@ function saveCurrentFlow() {
   flow.name = document.getElementById("flowNameInput").value.trim() || "Fluxo sem nome";
   flow.personaIds = getSelectedPersonaIds();
   flow.graph = dfEditor.export();
-  renderFlowsList();
   const status = document.getElementById("flowSaveStatus");
   status.textContent = "Fluxo salvo neste rascunho — clique em uma aba e depois em Salvar alterações pra publicar.";
   status.className = "admin-status success";
@@ -226,14 +225,15 @@ function saveCurrentFlow() {
 
 function deleteCurrentFlow() {
   if (!currentFlowId) return;
+  if (!confirm("Excluir este fluxo?")) return;
   delete flowsDraft[currentFlowId];
   currentFlowId = null;
-  document.getElementById("flowEditorWrap").hidden = true;
-  renderFlowsList();
+  backToFlowsList();
 }
 
-function closeFlowEditor() {
+function backToFlowsList() {
   document.getElementById("flowEditorWrap").hidden = true;
+  document.getElementById("flowsListView").hidden = false;
   currentFlowId = null;
   renderFlowsList();
 }
@@ -241,8 +241,9 @@ function closeFlowEditor() {
 function initFlowsTab() {
   bindPaletteDragDrop();
   bindCanvasDelegation();
-  document.getElementById("newFlowBtn").addEventListener("click", createNewFlow);
+  document.getElementById("newFlowBtnList").addEventListener("click", createNewFlow);
+  document.getElementById("newFlowBtnEditor").addEventListener("click", createNewFlow);
   document.getElementById("saveFlowBtn").addEventListener("click", saveCurrentFlow);
   document.getElementById("deleteFlowBtn").addEventListener("click", deleteCurrentFlow);
-  document.getElementById("closeFlowEditorBtn").addEventListener("click", closeFlowEditor);
+  document.getElementById("closeFlowEditorBtn").addEventListener("click", backToFlowsList);
 }

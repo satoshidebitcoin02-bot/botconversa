@@ -24,15 +24,24 @@ function uid() {
   return "p_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
-// ---- abas ----
+// ---- abas (persistem entre reloads via localStorage) ----
+const TAB_STORAGE_KEY = "adminActiveTab";
+
+function activateTab(tabName) {
+  const btn = document.querySelector(`.admin-tab-btn[data-tab="${tabName}"]`);
+  if (!btn) return;
+  document.querySelectorAll(".admin-tab-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.querySelectorAll(".admin-tab-panel").forEach(p => (p.hidden = true));
+  document.getElementById(`tab-${tabName}`).hidden = false;
+  localStorage.setItem(TAB_STORAGE_KEY, tabName);
+}
+
 document.querySelectorAll(".admin-tab-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".admin-tab-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    document.querySelectorAll(".admin-tab-panel").forEach(p => (p.hidden = true));
-    document.getElementById(`tab-${btn.dataset.tab}`).hidden = false;
-  });
+  btn.addEventListener("click", () => activateTab(btn.dataset.tab));
 });
+
+activateTab(localStorage.getItem(TAB_STORAGE_KEY) || "appearance");
 
 // ---- carregar / popular ----
 async function loadConfig() {
@@ -107,7 +116,7 @@ function renderPersonaList() {
           <label>Foto</label>
           <input type="hidden" class="p-avatar" value="${(p.avatar || "").replace(/"/g, "&quot;")}" />
           <label class="admin-upload-btn">
-            📁 Enviar arquivo
+            ${icon("folder", 12)} Enviar arquivo
             <input type="file" accept="image/*" class="p-avatar-file" hidden />
           </label>
         </div>
@@ -116,7 +125,7 @@ function renderPersonaList() {
           <textarea class="p-opener" rows="2">${p.opener || ""}</textarea>
         </div>
       </div>
-      <button type="button" class="admin-secondary-btn remove-persona-btn" title="Remover personagem">🗑</button>
+      <button type="button" class="admin-secondary-btn remove-persona-btn" title="Remover personagem">${icon("trash", 14)}</button>
     </div>
   `).join("");
 

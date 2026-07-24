@@ -56,7 +56,7 @@ function addDocumentBubble(filename, url) {
   row.className = "msg-row them";
   row.innerHTML = `
     <img class="mini-avatar" src="${persona.avatar}" alt="" />
-    <a class="bubble bubble-doc" href="${url || "#"}" target="_blank" rel="noopener">📄 ${filename || "documento"}</a>
+    <a class="bubble bubble-doc" href="${url || "#"}" target="_blank" rel="noopener">${icon("file-text", 14)} ${filename || "documento"}</a>
   `;
   messagesEl.appendChild(row);
   messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -67,7 +67,7 @@ function addContactBubble(name, phone) {
   row.className = "msg-row them";
   row.innerHTML = `
     <img class="mini-avatar" src="${persona.avatar}" alt="" />
-    <div class="bubble bubble-contact">👤 <strong>${name || "Contato"}</strong>${phone ? "<br>" + phone : ""}</div>
+    <div class="bubble bubble-contact">${icon("user", 14)} <strong>${name || "Contato"}</strong>${phone ? "<br>" + phone : ""}</div>
   `;
   messagesEl.appendChild(row);
   messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -78,7 +78,7 @@ function addInlineAd() {
   const wrap = document.createElement("div");
   wrap.className = "ad-inline";
   wrap.innerHTML = `
-    <div class="ad-banner">📢 ${ad.title}</div>
+    <div class="ad-banner">${icon("megaphone", 16)} ${ad.title}</div>
     <div class="ad-meta">
       <span>${ad.body}</span>
       <span>${ad.label}</span>
