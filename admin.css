@@ -520,7 +520,11 @@ body.admin-body {
   position: relative;
 }
 
-/* reset do visual padrão do Drawflow — só o .df-node interno desenha a caixa */
+/* reset do visual padrão do Drawflow — só o .df-node interno desenha a caixa.
+   IMPORTANTE: não mexer em "position" aqui — o Drawflow exige que
+   .drawflow-node continue position:absolute (é como ele posiciona os nós
+   livremente no canvas); sobrescrever isso quebra o posicionamento de
+   nós, conectores e linhas. */
 .drawflow .drawflow-node {
   padding: 0;
   background: transparent;
@@ -528,12 +532,27 @@ body.admin-body {
   box-shadow: none;
   min-height: 0;
   width: auto;
-  position: relative;
+}
+
+/* o Drawflow pinta o nó selecionado de vermelho por padrão — cancela isso
+   e usa só um contorno roxo no card interno */
+.drawflow .drawflow-node.selected {
+  background: transparent;
 }
 
 .drawflow .drawflow-node.selected .df-node {
   outline: 2px solid var(--purple);
   outline-offset: 1px;
+}
+
+/* os inputs/outputs ficam em colunas (.inputs/.outputs) empilhados —
+   centraliza essa coluna verticalmente em relação ao card */
+.drawflow .drawflow-node .inputs,
+.drawflow .drawflow-node .outputs {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
 }
 
 .drawflow .drawflow-node .input,
@@ -543,11 +562,8 @@ body.admin-body {
   background: #ffcf4d;
   border: 2px solid #1c1a26;
   z-index: 2;
-  top: 0 !important;
-  bottom: 0 !important;
-  margin-top: auto !important;
-  margin-bottom: auto !important;
-  transform: none !important;
+  margin-bottom: 0;
+  top: auto;
 }
 
 .drawflow .drawflow-node .input:hover,
