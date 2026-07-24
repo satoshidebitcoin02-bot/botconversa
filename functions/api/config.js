@@ -1,9 +1,7 @@
 // Guarda a configuração do painel admin (logo, personas, fundo, sons) no
 // Cloudflare KV, compartilhada com todo mundo que acessa o site.
-// A senha do painel é definida direto pelo navegador em admin.html
-// (primeiro acesso), sem precisar de wrangler secret nem de novo deploy.
-
-import { verifyAdminPassword } from "../_lib/auth.js";
+// admin.html não fica atrás de login — a URL não é linkada em nenhum
+// lugar do site público, então é "secreta por não estar visível".
 
 const KV_KEY = "site-config";
 
@@ -17,15 +15,6 @@ export async function onRequestGet(context) {
 
 export async function onRequestPost(context) {
   const { request, env } = context;
-
-  const password = request.headers.get("x-admin-password") || "";
-  const ok = await verifyAdminPassword(env, password);
-  if (!ok) {
-    return new Response(JSON.stringify({ error: "senha inválida" }), {
-      status: 401,
-      headers: { "content-type": "application/json" },
-    });
-  }
 
   let body;
   try {
