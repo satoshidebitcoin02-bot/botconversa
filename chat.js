@@ -1,4 +1,6 @@
 // Página de conversa — chat com uma persona de IA (sempre rotulada como IA).
+// Suporta um fluxo de botões estilo ManyChat (persona.flow.nodes[]); texto
+// livre digitado pelo usuário sempre cai na IA/roteiro simulado.
 
 const params = new URLSearchParams(location.search);
 const personaId = params.get("id");
@@ -9,6 +11,7 @@ const sendBtn = document.getElementById("sendBtn");
 const photoInput = document.getElementById("photoInput");
 const attachPhotoBtn = document.getElementById("attachPhotoBtn");
 const attachAudioBtn = document.getElementById("attachAudioBtn");
+const quickRepliesEl = document.getElementById("quickReplies");
 
 let persona = PERSONAS.find(p => p.id === personaId) || PERSONAS[0];
 let aiMsgCount = 0;
@@ -122,9 +125,67 @@ function showAdOverlay() {
   };
 }
 
+// entrega uma resposta "them" já pronta (usada tanto pelo fluxo quanto pela IA),
+// cuidando de som, histórico e frequência de anúncios
+function deliverReply(text) {
+  addBubble(text, "them");
+  playReceiveSound();
+  history.push({ role: "assistant", content: text });
+  aiMsgCount += 1;
+
+  if (aiMsgCount % AD_EVERY_N_AI_MESSAGES === 0) {
+    showAdOverlay();
+  } else if (aiMsgCount % 6 === 0) {
+    addInlineAd();
+  }
+}
+
+// ---- fluxo estilo ManyChat (botões de resposta rápida) ----
+function renderQuickReplies(nodeIndex) {
+  const flow = persona.flow;
+  quickRepliesEl.innerHTML = "";
+  if (!flow || !Array.isArray(flow.nodes) || nodeIndex == null) return;
+  const node = flow.nodes[nodeIndex];
+  if (!node || !Array.isArray(node.buttons) || node.buttons.length === 0) return;
+
+  node.buttons.forEach(btn => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "quick-reply-btn";
+    b.textContent = btn.label || "…";
+    b.addEventListener("click", () => handleQuickReply(btn));
+    quickRepliesEl.appendChild(b);
+  });
+}
+
+async function handleQuickReply(btn) {
+  quickRepliesEl.innerHTML = "";
+  addBubble(btn.label || "…", "me");
+  playSendSound();
+  history.push({ role: "user", content: btn.label || "" });
+
+  const nextIdx = typeof btn.next === "number" ? btn.next : -1;
+  const flow = persona.flow;
+  const nextNode = flow && nextIdx >= 0 ? flow.nodes[nextIdx] : null;
+
+  showTyping();
+  await new Promise(r => setTimeout(r, 500 + Math.random() * 500));
+  hideTyping();
+
+  if (nextNode) {
+    deliverReply(nextNode.message || "…");
+    renderQuickReplies(nextIdx);
+  } else {
+    // fim do fluxo (ou "sem ação") — devolve pra IA/roteiro simulado
+    const reply = await fetchAiReply(btn.label || "");
+    deliverReply(reply);
+  }
+}
+
 async function sendMessage() {
   const text = inputEl.value.trim();
   if (!text) return;
+  quickRepliesEl.innerHTML = "";
   addBubble(text, "me");
   playSendSound();
   inputEl.value = "";
@@ -135,18 +196,7 @@ async function sendMessage() {
   const [reply] = await Promise.all([fetchAiReply(text), minDelay]);
 
   hideTyping();
-  addBubble(reply, "them");
-  playReceiveSound();
-  history.push({ role: "assistant", content: reply });
-  aiMsgCount += 1;
-
-  // a cada N mensagens da IA, exibe um anúncio em pop-up que só fecha após alguns segundos
-  if (aiMsgCount % AD_EVERY_N_AI_MESSAGES === 0) {
-    showAdOverlay();
-  } else if (aiMsgCount % 6 === 0) {
-    // ocasionalmente insere um anúncio nativo dentro do fluxo de conversa
-    addInlineAd();
-  }
+  deliverReply(reply);
 }
 
 sendBtn.addEventListener("click", sendMessage);
@@ -210,5 +260,12 @@ attachAudioBtn.addEventListener("click", toggleRecording);
   document.getElementById("hdrAvatar").src = persona.avatar;
   document.getElementById("hdrName").textContent = persona.name;
 
-  addBubble(persona.opener, "them");
+  const hasFlow = persona.flow && Array.isArray(persona.flow.nodes) && persona.flow.nodes.length > 0;
+  if (hasFlow) {
+    const startNode = persona.flow.nodes[0];
+    addBubble(startNode.message || persona.opener, "them");
+    renderQuickReplies(0);
+  } else {
+    addBubble(persona.opener, "them");
+  }
 })();

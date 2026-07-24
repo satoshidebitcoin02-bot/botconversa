@@ -203,6 +203,87 @@ body.admin-body {
   resize: vertical;
 }
 
+.persona-flow {
+  border-top: 1px dashed var(--border);
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+.flow-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.flow-node {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flow-node-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flow-node-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--purple);
+  background: #f0e6ff;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.flow-node-header .admin-secondary-btn {
+  font-size: 11px;
+  padding: 4px 9px;
+}
+
+.node-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.flow-button-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.flow-button-row .btn-label {
+  flex: 1;
+  padding: 6px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  font-size: 12.5px;
+}
+
+.flow-button-row .btn-next {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  background: #fff;
+}
+
+.flow-button-row .remove-button-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.add-node-btn, .add-button-btn {
+  align-self: flex-start;
+  font-size: 12px;
+}
+
 .admin-save-bar {
   position: fixed;
   bottom: 0;

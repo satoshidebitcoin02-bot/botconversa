@@ -476,6 +476,37 @@ body {
   color: var(--text-dim);
 }
 
+.quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 12px 10px;
+  flex: 0 0 auto;
+}
+
+.quick-replies:empty { padding: 0; }
+
+.quick-reply-btn {
+  background: #fff;
+  border: 1.5px solid var(--blue);
+  color: var(--blue);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 8px 15px;
+  border-radius: 18px;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.12s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.quick-reply-btn:hover {
+  background: var(--blue);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.quick-reply-btn:active { transform: translateY(0) scale(0.97); }
+
 .composer {
   display: flex;
   align-items: center;
