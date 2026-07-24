@@ -40,7 +40,13 @@
     <div class="admin-sidebar-title">Painel Admin</div>
     <button type="button" class="admin-tab-btn active" data-tab="appearance"><svg class="icon" width="16" height="16" aria-hidden="true"><use href="#i-settings"></use></svg> Aparência</button>
     <button type="button" class="admin-tab-btn" data-tab="personas"><svg class="icon" width="16" height="16" aria-hidden="true"><use href="#i-users"></use></svg> Personagens</button>
-    <button type="button" class="admin-tab-btn" data-tab="flows"><svg class="icon" width="16" height="16" aria-hidden="true"><use href="#i-shuffle"></use></svg> Fluxos</button>
+    <button type="button" class="admin-tab-btn" data-tab="flows" id="flowsTabBtn"><svg class="icon" width="16" height="16" aria-hidden="true"><use href="#i-shuffle"></use></svg> Fluxos</button>
+    <div id="flowsSubmenu" class="flows-submenu">
+      <button type="button" id="newFlowBtnSidebar" class="flows-submenu-add">
+        <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#i-plus"></use></svg> Novo fluxo
+      </button>
+      <div id="flowsSubmenuList" class="flows-submenu-list"></div>
+    </div>
   </nav>
 
   <main class="admin-main">
@@ -102,15 +108,6 @@
     </section>
 
     <section id="tab-flows" class="admin-tab-panel" hidden>
-
-      <div id="flowsListView">
-        <div class="flows-list-header">
-          <h2>Fluxos</h2>
-          <button type="button" id="newFlowBtnList" class="admin-primary-btn">+ Novo fluxo</button>
-        </div>
-        <div id="flowsList" class="flows-grid"></div>
-      </div>
-
       <div id="flowEditorWrap" class="flow-editor-wrap" hidden>
         <div class="flow-toolbar">
           <div class="flow-toolbar-row">
@@ -119,7 +116,6 @@
               <button type="button" id="newFlowBtnEditor" class="admin-secondary-btn">+ Novo fluxo</button>
               <button type="button" id="saveFlowBtn" class="admin-primary-btn">Salvar fluxo</button>
               <button type="button" id="deleteFlowBtn" class="admin-secondary-btn">Excluir</button>
-              <button type="button" id="closeFlowEditorBtn" class="admin-secondary-btn">Voltar</button>
             </div>
           </div>
           <div class="flow-toolbar-row">
@@ -144,7 +140,6 @@
           <div id="drawflowCanvas" class="drawflow-canvas"></div>
         </div>
       </div>
-
     </section>
 
   </main>

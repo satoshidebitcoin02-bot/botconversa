@@ -14,19 +14,34 @@ const NODE_META = {
   contact: { icon: "user", label: "Contato", inputs: 1, outputs: 1 },
   document: { icon: "file-text", label: "Documento", inputs: 1, outputs: 1 },
   media: { icon: "image", label: "Mídia", inputs: 1, outputs: 1 },
-  text: { icon: "message", label: "Texto", inputs: 1, outputs: 1 },
+  text: { icon: "message", label: "Texto", inputs: 1, outputs: 4 },
 };
 
 function escapeAttr(str) {
   return String(str || "").replace(/"/g, "&quot;");
 }
 
+function deleteButtonHtml() {
+  return `<button type="button" class="df-delete-node" title="Remover nó">${icon("trash", 12)}</button>`;
+}
+
 function nodeHtml(type, data) {
   const meta = NODE_META[type];
-  const title = `<div class="df-node-title">${icon(meta.icon, 13)} ${meta.label}</div>`;
+  const title = `<div class="df-node-title"><span>${icon(meta.icon, 13)} ${meta.label}</span>${deleteButtonHtml()}</div>`;
 
   if (type === "text") {
-    return `<div class="df-node">${title}<textarea class="df-field" data-field="message" rows="3" placeholder="Mensagem que ela envia...">${data.message || ""}</textarea></div>`;
+    const buttons = data.buttons || [{ label: "" }, { label: "" }, { label: "" }, { label: "" }];
+    const buttonRows = buttons.map((b, i) => `
+      <div class="df-row">
+        <span class="df-branch-letter">${String.fromCharCode(65 + i)}</span>
+        <input type="text" class="df-field" data-field="buttons.${i}.label" placeholder="Botão (opcional)" value="${escapeAttr(b.label)}" />
+      </div>
+    `).join("");
+    return `<div class="df-node">${title}
+      <textarea class="df-field" data-field="message" rows="3" placeholder="Mensagem que ela envia...">${data.message || ""}</textarea>
+      <div class="df-hint">Botões (opcional — deixe em branco pra não usar; se usar, o fluxo espera o clique):</div>
+      ${buttonRows}
+    </div>`;
   }
   if (type === "delay") {
     return `<div class="df-node">${title}<div class="df-row"><input type="number" class="df-field" data-field="seconds" min="1" max="120" value="${data.seconds || 5}" /> <span>segundos</span></div></div>`;
@@ -81,9 +96,12 @@ function addNodeToCanvas(type, clientX, clientY) {
   const posX = (clientX - rect.x) / dfEditor.zoom;
   const posY = (clientY - rect.y) / dfEditor.zoom;
 
-  const initialData = type === "randomizer"
-    ? { branches: [{ weight: 25 }, { weight: 25 }, { weight: 25 }, { weight: 25 }] }
-    : {};
+  let initialData = {};
+  if (type === "randomizer") {
+    initialData = { branches: [{ weight: 25 }, { weight: 25 }, { weight: 25 }, { weight: 25 }] };
+  } else if (type === "text") {
+    initialData = { buttons: [{ label: "" }, { label: "" }, { label: "" }, { label: "" }] };
+  }
 
   dfEditor.addNode(
     type,
@@ -111,6 +129,15 @@ function setNestedField(obj, path, value) {
 
 function bindCanvasDelegation() {
   const container = document.getElementById("drawflowCanvas");
+
+  container.addEventListener("click", e => {
+    const delBtn = e.target.closest(".df-delete-node");
+    if (!delBtn) return;
+    const nodeEl = delBtn.closest(".drawflow-node");
+    if (!nodeEl) return;
+    const nodeId = nodeEl.id.replace("node-", "");
+    dfEditor.removeNodeId("node-" + nodeId);
+  });
 
   container.addEventListener("input", e => {
     const field = e.target.closest(".df-field");
@@ -157,20 +184,15 @@ function bindPaletteDragDrop() {
 }
 
 function renderFlowsList() {
-  const list = document.getElementById("flowsList");
+  const list = document.getElementById("flowsSubmenuList");
   const flows = Object.values(flowsDraft);
-  if (flows.length === 0) {
-    list.innerHTML = `<p class="flows-empty">Nenhum fluxo criado ainda. Clique em "+ Novo fluxo" pra começar.</p>`;
-    return;
-  }
   list.innerHTML = flows.map(f => `
-    <div class="flow-list-item" data-flow-id="${f.id}">
-      <span class="flow-list-item-name">${icon("shuffle", 15)} ${f.name || "(sem nome)"}</span>
-      <span class="flow-persona-count">${(f.personaIds || []).length} personagem(ns)</span>
-    </div>
+    <button type="button" class="flows-submenu-item ${f.id === currentFlowId ? "active" : ""}" data-flow-id="${f.id}">
+      ${icon("shuffle", 12)} ${f.name || "(sem nome)"}
+    </button>
   `).join("");
 
-  list.querySelectorAll(".flow-list-item").forEach(el => {
+  list.querySelectorAll(".flows-submenu-item").forEach(el => {
     el.addEventListener("click", () => openFlow(el.dataset.flowId));
   });
 }
@@ -193,11 +215,12 @@ function openFlow(flowId) {
   currentFlowId = flowId;
   const flow = flowsDraft[flowId];
 
-  document.getElementById("flowsListView").hidden = true;
+  activateTab("flows");
   document.getElementById("flowEditorWrap").hidden = false;
   document.getElementById("flowNameInput").value = flow.name || "";
   document.getElementById("flowSaveStatus").textContent = "";
   renderPersonaAssign(flow.personaIds || []);
+  renderFlowsList();
 
   initDrawflow();
   dfEditor.clear();
@@ -218,8 +241,9 @@ function saveCurrentFlow() {
   flow.name = document.getElementById("flowNameInput").value.trim() || "Fluxo sem nome";
   flow.personaIds = getSelectedPersonaIds();
   flow.graph = dfEditor.export();
+  renderFlowsList();
   const status = document.getElementById("flowSaveStatus");
-  status.textContent = "Fluxo salvo neste rascunho — clique em uma aba e depois em Salvar alterações pra publicar.";
+  status.textContent = "Fluxo salvo neste rascunho — clique em Salvar alterações pra publicar.";
   status.className = "admin-status success";
 }
 
@@ -228,22 +252,16 @@ function deleteCurrentFlow() {
   if (!confirm("Excluir este fluxo?")) return;
   delete flowsDraft[currentFlowId];
   currentFlowId = null;
-  backToFlowsList();
-}
-
-function backToFlowsList() {
   document.getElementById("flowEditorWrap").hidden = true;
-  document.getElementById("flowsListView").hidden = false;
-  currentFlowId = null;
   renderFlowsList();
 }
 
 function initFlowsTab() {
   bindPaletteDragDrop();
   bindCanvasDelegation();
-  document.getElementById("newFlowBtnList").addEventListener("click", createNewFlow);
+  document.getElementById("newFlowBtnSidebar").addEventListener("click", createNewFlow);
   document.getElementById("newFlowBtnEditor").addEventListener("click", createNewFlow);
   document.getElementById("saveFlowBtn").addEventListener("click", saveCurrentFlow);
   document.getElementById("deleteFlowBtn").addEventListener("click", deleteCurrentFlow);
-  document.getElementById("closeFlowEditorBtn").addEventListener("click", backToFlowsList);
+  renderFlowsList();
 }

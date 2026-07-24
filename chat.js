@@ -12,6 +12,7 @@ const sendBtn = document.getElementById("sendBtn");
 const photoInput = document.getElementById("photoInput");
 const attachPhotoBtn = document.getElementById("attachPhotoBtn");
 const attachAudioBtn = document.getElementById("attachAudioBtn");
+const quickRepliesEl = document.getElementById("quickReplies");
 
 let persona = PERSONAS[0];
 let aiMsgCount = 0;
@@ -152,7 +153,7 @@ function sleepRandom() {
 }
 
 // ---- motor do fluxo visual (grafo estilo ManyChat) ----
-const flowRuntime = { nodes: null, waitingForReply: false, currentNodeId: null };
+const flowRuntime = { nodes: null, waitingForReply: false, currentNodeId: null, pendingButtonNodeId: null };
 
 function getGraphNodes(flow) {
   return (flow && flow.graph && flow.graph.drawflow && flow.graph.drawflow.Home && flow.graph.drawflow.Home.data) || {};
@@ -198,6 +199,16 @@ async function runFlowFrom(nodeId) {
       await sleepRandom();
       hideTyping();
       deliverReply((node.data && node.data.message) || "…");
+
+      const buttons = ((node.data && node.data.buttons) || [])
+        .map((b, i) => ({ label: (b.label || "").trim(), outputKey: `output_${i + 1}` }))
+        .filter(b => b.label);
+
+      if (buttons.length > 0) {
+        flowRuntime.pendingButtonNodeId = id;
+        renderTextButtons(buttons);
+        return;
+      }
       id = nextNodeId(node);
     } else if (node.name === "delay") {
       const secs = Math.min(Number(node.data && node.data.seconds) || 1, 120);
@@ -236,9 +247,37 @@ async function runFlowFrom(nodeId) {
   }
 }
 
+function renderTextButtons(buttons) {
+  quickRepliesEl.innerHTML = "";
+  buttons.forEach(btn => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "quick-reply-btn";
+    b.textContent = btn.label;
+    b.addEventListener("click", () => handleTextButtonClick(btn));
+    quickRepliesEl.appendChild(b);
+  });
+}
+
+async function handleTextButtonClick(btn) {
+  quickRepliesEl.innerHTML = "";
+  const nodeId = flowRuntime.pendingButtonNodeId;
+  flowRuntime.pendingButtonNodeId = null;
+  if (!nodeId || !flowRuntime.nodes) return;
+  const node = flowRuntime.nodes[nodeId];
+
+  addBubble(btn.label, "me");
+  playSendSound();
+  history.push({ role: "user", content: btn.label });
+
+  await runFlowFrom(nextNodeId(node, btn.outputKey));
+}
+
 async function sendMessage() {
   const text = inputEl.value.trim();
   if (!text) return;
+  quickRepliesEl.innerHTML = "";
+  flowRuntime.pendingButtonNodeId = null;
   addBubble(text, "me");
   playSendSound();
   inputEl.value = "";
