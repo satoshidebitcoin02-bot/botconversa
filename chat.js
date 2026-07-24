@@ -12,6 +12,24 @@ const sendBtn = document.getElementById("sendBtn");
 
 let aiMsgCount = 0;
 const AD_EVERY_N_AI_MESSAGES = 4; // mostra um anúncio intersticial a cada N mensagens enviadas pela IA
+const history = []; // histórico enviado pra API (role: "user" | "assistant")
+
+async function fetchAiReply(text) {
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ persona, history, userMessage: text }),
+    });
+    if (!res.ok) throw new Error("api error");
+    const data = await res.json();
+    if (!data.reply) throw new Error("sem reply");
+    return data.reply;
+  } catch (err) {
+    // fallback pro roteiro simulado caso a API/chave não esteja configurada
+    return generateReply(text);
+  }
+}
 
 function addBubble(text, who) {
   const row = document.createElement("div");
@@ -88,28 +106,29 @@ function showAdOverlay() {
   };
 }
 
-function sendMessage() {
+async function sendMessage() {
   const text = inputEl.value.trim();
   if (!text) return;
   addBubble(text, "me");
   inputEl.value = "";
+  history.push({ role: "user", content: text });
 
   showTyping();
-  const delay = 700 + Math.random() * 900;
-  setTimeout(() => {
-    hideTyping();
-    const reply = generateReply(text);
-    addBubble(reply, "them");
-    aiMsgCount += 1;
+  const minDelay = new Promise(r => setTimeout(r, 500 + Math.random() * 500));
+  const [reply] = await Promise.all([fetchAiReply(text), minDelay]);
 
-    // a cada N mensagens da IA, exibe um anúncio em pop-up que só fecha após alguns segundos
-    if (aiMsgCount % AD_EVERY_N_AI_MESSAGES === 0) {
-      showAdOverlay();
-    } else if (aiMsgCount % 6 === 0) {
-      // ocasionalmente insere um anúncio nativo dentro do fluxo de conversa
-      addInlineAd();
-    }
-  }, delay);
+  hideTyping();
+  addBubble(reply, "them");
+  history.push({ role: "assistant", content: reply });
+  aiMsgCount += 1;
+
+  // a cada N mensagens da IA, exibe um anúncio em pop-up que só fecha após alguns segundos
+  if (aiMsgCount % AD_EVERY_N_AI_MESSAGES === 0) {
+    showAdOverlay();
+  } else if (aiMsgCount % 6 === 0) {
+    // ocasionalmente insere um anúncio nativo dentro do fluxo de conversa
+    addInlineAd();
+  }
 }
 
 sendBtn.addEventListener("click", sendMessage);
