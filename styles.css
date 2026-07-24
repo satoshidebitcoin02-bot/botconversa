@@ -206,7 +206,10 @@ body {
   gap: 12px;
   padding: 10px 16px;
   cursor: pointer;
+  border-bottom: 1px solid var(--border);
 }
+
+.convo:last-child { border-bottom: none; }
 
 .convo:hover { background: var(--bg-alt); }
 
@@ -468,6 +471,67 @@ body {
 .composer button:disabled {
   color: var(--text-dim);
   cursor: default;
+}
+
+.icon-btn {
+  font-size: 19px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn:hover { background: var(--bg-alt); }
+
+.icon-btn.recording {
+  background: #ffe0e0;
+  color: #e0245e;
+  animation: pulse-rec 1s infinite;
+}
+
+@keyframes pulse-rec {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224, 36, 94, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(224, 36, 94, 0); }
+}
+
+.send-btn {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--blue), var(--purple)) !important;
+  color: #fff !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  box-shadow: 0 2px 6px rgba(160, 51, 255, 0.35);
+  transition: transform 0.12s ease;
+}
+
+.send-btn:hover { transform: scale(1.06); }
+.send-btn:active { transform: scale(0.94); }
+
+.bubble-media {
+  padding: 4px !important;
+  background: transparent !important;
+  overflow: hidden;
+}
+
+.bubble-image {
+  display: block;
+  max-width: 220px;
+  max-height: 260px;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.bubble-audio {
+  height: 36px;
+  max-width: 230px;
 }
 
 /* fixed bottom banner ad */

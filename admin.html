@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Painel Admin — IA Companion</title>
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="admin.css" />
+</head>
+<body class="admin-body">
+
+<div id="loginScreen" class="admin-login">
+  <div class="admin-login-card">
+    <h1>Painel Admin</h1>
+    <p>Digite a senha de administrador para continuar.</p>
+    <input id="passwordInput" type="password" placeholder="Senha" autocomplete="current-password" />
+    <button id="loginBtn">Entrar</button>
+    <div id="loginError" class="admin-error"></div>
+  </div>
+</div>
+
+<div id="adminPanel" class="admin-wrap" hidden>
+  <header class="admin-header">
+    <h1>Painel Admin</h1>
+    <button id="logoutBtn" class="admin-secondary-btn">Sair</button>
+  </header>
+
+  <section class="admin-card">
+    <h2>Logo do app</h2>
+    <div class="admin-row">
+      <label><input type="radio" name="logoType" value="text" checked /> Texto</label>
+      <label><input type="radio" name="logoType" value="image" /> Imagem (URL)</label>
+    </div>
+    <input id="logoTextInput" type="text" placeholder="Texto do logo (ex: chats)" />
+    <input id="logoImageInput" type="text" placeholder="URL da imagem do logo" hidden />
+  </section>
+
+  <section class="admin-card">
+    <h2>Fundo da conversa</h2>
+    <input id="backgroundInput" type="text" placeholder="URL da imagem de fundo" />
+    <div id="backgroundPreview" class="admin-bg-preview"></div>
+  </section>
+
+  <section class="admin-card">
+    <h2>Sons</h2>
+    <label class="admin-row">
+      <input id="soundsToggle" type="checkbox" checked />
+      Ativar som ao enviar/receber mensagens
+    </label>
+  </section>
+
+  <section class="admin-card">
+    <h2>Personagens</h2>
+    <div id="personaList" class="admin-persona-list"></div>
+  </section>
+
+  <div class="admin-save-bar">
+    <div id="saveStatus" class="admin-status"></div>
+    <button id="saveBtn" class="admin-primary-btn">Salvar alterações</button>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

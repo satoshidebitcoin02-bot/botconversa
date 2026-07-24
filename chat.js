@@ -1,15 +1,16 @@
-// Página de conversa — chat simulado com uma persona de IA (sempre rotulada como IA).
+// Página de conversa — chat com uma persona de IA (sempre rotulada como IA).
 
 const params = new URLSearchParams(location.search);
-const persona = PERSONAS.find(p => p.id === params.get("id")) || PERSONAS[0];
-
-document.getElementById("hdrAvatar").src = persona.avatar;
-document.getElementById("hdrName").textContent = persona.name;
+const personaId = params.get("id");
 
 const messagesEl = document.getElementById("messages");
 const inputEl = document.getElementById("msgInput");
 const sendBtn = document.getElementById("sendBtn");
+const photoInput = document.getElementById("photoInput");
+const attachPhotoBtn = document.getElementById("attachPhotoBtn");
+const attachAudioBtn = document.getElementById("attachAudioBtn");
 
+let persona = PERSONAS.find(p => p.id === personaId) || PERSONAS[0];
 let aiMsgCount = 0;
 const AD_EVERY_N_AI_MESSAGES = 4; // mostra um anúncio intersticial a cada N mensagens enviadas pela IA
 const history = []; // histórico enviado pra API (role: "user" | "assistant")
@@ -43,6 +44,21 @@ function addBubble(text, who) {
   messagesEl.appendChild(row);
   messagesEl.scrollTop = messagesEl.scrollHeight;
   return row;
+}
+
+function addMediaBubble(kind, url, who) {
+  const row = document.createElement("div");
+  row.className = `msg-row ${who}`;
+  const media = kind === "image"
+    ? `<img class="bubble-image" src="${url}" alt="foto enviada" />`
+    : `<audio class="bubble-audio" controls src="${url}"></audio>`;
+  if (who === "them") {
+    row.innerHTML = `<img class="mini-avatar" src="${persona.avatar}" alt="" /><div class="bubble bubble-media">${media}</div>`;
+  } else {
+    row.innerHTML = `<div class="bubble bubble-media">${media}</div>`;
+  }
+  messagesEl.appendChild(row);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
 function addInlineAd() {
@@ -110,6 +126,7 @@ async function sendMessage() {
   const text = inputEl.value.trim();
   if (!text) return;
   addBubble(text, "me");
+  playSendSound();
   inputEl.value = "";
   history.push({ role: "user", content: text });
 
@@ -119,6 +136,7 @@ async function sendMessage() {
 
   hideTyping();
   addBubble(reply, "them");
+  playReceiveSound();
   history.push({ role: "assistant", content: reply });
   aiMsgCount += 1;
 
@@ -136,5 +154,61 @@ inputEl.addEventListener("keydown", e => {
   if (e.key === "Enter") sendMessage();
 });
 
-// mensagem inicial da persona
-addBubble(persona.opener, "them");
+// ---- anexar foto ----
+attachPhotoBtn.addEventListener("click", () => photoInput.click());
+photoInput.addEventListener("change", () => {
+  const file = photoInput.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  addMediaBubble("image", url, "me");
+  playSendSound();
+  photoInput.value = "";
+});
+
+// ---- gravar áudio ----
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+
+async function toggleRecording() {
+  if (isRecording) {
+    mediaRecorder.stop();
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(audioChunks, { type: "audio/webm" });
+      const url = URL.createObjectURL(blob);
+      addMediaBubble("audio", url, "me");
+      playSendSound();
+      stream.getTracks().forEach(t => t.stop());
+      isRecording = false;
+      attachAudioBtn.classList.remove("recording");
+    };
+    mediaRecorder.start();
+    isRecording = true;
+    attachAudioBtn.classList.add("recording");
+  } catch {
+    alert("Não foi possível acessar o microfone.");
+  }
+}
+
+attachAudioBtn.addEventListener("click", toggleRecording);
+
+// ---- inicialização ----
+(async function init() {
+  const config = await loadSiteConfig();
+  const personas = mergedPersonas(config);
+  persona = personas.find(p => p.id === personaId) || personas[0];
+  setSoundsEnabled(config.soundsEnabled);
+  applyBackground(config);
+
+  document.getElementById("hdrAvatar").src = persona.avatar;
+  document.getElementById("hdrName").textContent = persona.name;
+
+  addBubble(persona.opener, "them");
+})();

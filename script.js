@@ -1,8 +1,8 @@
 // Página de lista — monta stories e lista de conversas com as personas de IA.
 
-function renderStories() {
+function renderStories(personas) {
   const el = document.getElementById("stories");
-  el.innerHTML = PERSONAS.map(p => `
+  el.innerHTML = personas.map(p => `
     <div class="story" onclick="location.href='chat.html?id=${p.id}'">
       <div class="avatar-wrap">
         <span class="ai-tag">IA</span>
@@ -14,9 +14,9 @@ function renderStories() {
   `).join("");
 }
 
-function renderConvoList() {
+function renderConvoList(personas) {
   const el = document.getElementById("convoList");
-  el.innerHTML = PERSONAS.map(p => `
+  el.innerHTML = personas.map(p => `
     <div class="convo" onclick="location.href='chat.html?id=${p.id}'">
       <div class="avatar-wrap">
         <img src="${p.avatar}" alt="${p.name}" />
@@ -34,5 +34,10 @@ function renderConvoList() {
   `).join("");
 }
 
-renderStories();
-renderConvoList();
+(async function init() {
+  const config = await loadSiteConfig();
+  const personas = mergedPersonas(config);
+  applyLogo(config);
+  renderStories(personas);
+  renderConvoList(personas);
+})();

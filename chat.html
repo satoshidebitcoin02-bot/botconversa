@@ -27,8 +27,13 @@
   <div class="messages" id="messages"></div>
 
   <div class="composer">
+    <button id="attachPhotoBtn" class="icon-btn" title="Enviar foto" type="button">📷</button>
+    <button id="attachAudioBtn" class="icon-btn" title="Gravar áudio" type="button">🎤</button>
+    <input id="photoInput" type="file" accept="image/*" hidden />
     <input id="msgInput" type="text" placeholder="Aa" autocomplete="off" />
-    <button id="sendBtn">➤</button>
+    <button id="sendBtn" class="send-btn" title="Enviar">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
   </div>
 
   <div class="fixed-ad">
@@ -49,6 +54,8 @@
 </div>
 
 <script src="data.js"></script>
+<script src="config-store.js"></script>
+<script src="sound-effects.js"></script>
 <script src="viewport-fix.js"></script>
 <script src="chat.js"></script>
 </body>
