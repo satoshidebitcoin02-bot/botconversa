@@ -38,7 +38,14 @@ function activateTab(tabName) {
 }
 
 document.querySelectorAll(".admin-tab-btn").forEach(btn => {
-  btn.addEventListener("click", () => activateTab(btn.dataset.tab));
+  btn.addEventListener("click", () => {
+    const leavingFlows = document.getElementById("tab-flows") && !document.getElementById("tab-flows").hidden;
+    if (leavingFlows && btn.dataset.tab !== "flows" && typeof confirmDiscardFlowChanges === "function") {
+      if (!confirmDiscardFlowChanges()) return;
+      flowDirty = false;
+    }
+    activateTab(btn.dataset.tab);
+  });
 });
 
 activateTab(localStorage.getItem(TAB_STORAGE_KEY) || "appearance");

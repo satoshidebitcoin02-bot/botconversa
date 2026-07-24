@@ -5,6 +5,23 @@
 let flowsDraft = {}; // { [flowId]: { id, name, personaIds, graph } }
 let dfEditor = null;
 let currentFlowId = null;
+let flowDirty = false;
+
+function markFlowDirty() {
+  flowDirty = true;
+}
+
+// retorna true se pode prosseguir (sem alterações, ou usuário confirmou perder elas)
+function confirmDiscardFlowChanges() {
+  if (!flowDirty) return true;
+  return confirm("Você tem alterações não salvas nesse fluxo. Sair mesmo assim e perder elas?");
+}
+
+window.addEventListener("beforeunload", e => {
+  if (!flowDirty) return;
+  e.preventDefault();
+  e.returnValue = "";
+});
 
 const NODE_META = {
   delay: { icon: "clock", label: "Delay", inputs: 1, outputs: 1 },
@@ -87,6 +104,11 @@ function initDrawflow() {
   dfEditor = new Drawflow(container);
   dfEditor.reroute = true;
   dfEditor.start();
+
+  dfEditor.on("connectionCreated", markFlowDirty);
+  dfEditor.on("connectionRemoved", markFlowDirty);
+  dfEditor.on("nodeMoved", markFlowDirty);
+  dfEditor.on("nodeRemoved", markFlowDirty);
 }
 
 function addNodeToCanvas(type, clientX, clientY) {
@@ -113,6 +135,7 @@ function addNodeToCanvas(type, clientX, clientY) {
     initialData,
     nodeHtml(type, initialData)
   );
+  markFlowDirty();
 }
 
 function setNestedField(obj, path, value) {
@@ -137,6 +160,7 @@ function bindCanvasDelegation() {
     if (!nodeEl) return;
     const nodeId = nodeEl.id.replace("node-", "");
     dfEditor.removeNodeId("node-" + nodeId);
+    markFlowDirty();
   });
 
   container.addEventListener("input", e => {
@@ -149,6 +173,7 @@ function bindCanvasDelegation() {
     const value = field.type === "number" ? Number(field.value) : field.value;
     setNestedField(nodeData, field.dataset.field, value);
     dfEditor.updateNodeDataFromId(nodeId, nodeData);
+    markFlowDirty();
   });
 
   container.addEventListener("change", async e => {
@@ -162,6 +187,7 @@ function bindCanvasDelegation() {
     nodeData.url = dataUrl;
     if (e.target.dataset.filenameField) nodeData.filename = file.name;
     dfEditor.updateNodeDataFromId(nodeId, nodeData);
+    markFlowDirty();
     const label = nodeEl.querySelector(".df-file-name");
     if (label) label.innerHTML = e.target.dataset.filenameField ? icon("file-text", 11) + " " + file.name : icon("check", 11) + " arquivo carregado";
   });
@@ -205,6 +231,9 @@ function renderPersonaAssign(selectedIds) {
       ${p.name}
     </label>
   `).join("");
+  wrap.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener("change", markFlowDirty);
+  });
 }
 
 function getSelectedPersonaIds() {
@@ -212,7 +241,10 @@ function getSelectedPersonaIds() {
 }
 
 function openFlow(flowId) {
+  if (currentFlowId && currentFlowId !== flowId && !confirmDiscardFlowChanges()) return;
+
   currentFlowId = flowId;
+  flowDirty = false;
   const flow = flowsDraft[flowId];
 
   activateTab("flows");
@@ -230,8 +262,10 @@ function openFlow(flowId) {
 }
 
 function createNewFlow() {
+  if (currentFlowId && !confirmDiscardFlowChanges()) return;
   const id = "flow_" + Date.now();
   flowsDraft[id] = { id, name: "Novo fluxo", personaIds: [], graph: null };
+  currentFlowId = null; // evita o confirm duplicado dentro de openFlow
   openFlow(id);
 }
 
@@ -241,6 +275,7 @@ function saveCurrentFlow() {
   flow.name = document.getElementById("flowNameInput").value.trim() || "Fluxo sem nome";
   flow.personaIds = getSelectedPersonaIds();
   flow.graph = dfEditor.export();
+  flowDirty = false;
   renderFlowsList();
   const status = document.getElementById("flowSaveStatus");
   status.textContent = "Fluxo salvo neste rascunho — clique em Salvar alterações pra publicar.";
@@ -252,6 +287,7 @@ function deleteCurrentFlow() {
   if (!confirm("Excluir este fluxo?")) return;
   delete flowsDraft[currentFlowId];
   currentFlowId = null;
+  flowDirty = false;
   document.getElementById("flowEditorWrap").hidden = true;
   renderFlowsList();
 }
@@ -263,5 +299,6 @@ function initFlowsTab() {
   document.getElementById("newFlowBtnEditor").addEventListener("click", createNewFlow);
   document.getElementById("saveFlowBtn").addEventListener("click", saveCurrentFlow);
   document.getElementById("deleteFlowBtn").addEventListener("click", deleteCurrentFlow);
+  document.getElementById("flowNameInput").addEventListener("input", markFlowDirty);
   renderFlowsList();
 }

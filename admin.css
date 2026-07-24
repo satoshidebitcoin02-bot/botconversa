@@ -566,9 +566,11 @@ body.admin-body {
   color: #e8e5f5;
   border-radius: 10px;
   padding: 10px 12px;
-  width: 190px;
+  width: 190px !important;
+  max-width: 190px !important;
   box-sizing: border-box;
   font-size: 12.5px;
+  overflow: hidden;
 }
 
 .df-node-title {
@@ -619,8 +621,11 @@ body.admin-body {
 }
 
 textarea.df-field {
-  resize: vertical;
+  resize: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
   min-height: 50px;
+  height: 60px;
 }
 
 .df-row {
