@@ -490,28 +490,36 @@ function createNewFlow() {
   openFlow(id);
 }
 
-function saveCurrentFlow() {
+async function saveCurrentFlow() {
   if (!currentFlowId) return;
   const flow = flowsDraft[currentFlowId];
   flow.name = document.getElementById("flowNameInput").value.trim() || "Fluxo sem nome";
   flow.personaIds = getSelectedPersonaIds();
   flow.graph = dfEditor.export();
-  flowDirty = false;
   renderFlowsList();
+
   const status = document.getElementById("flowSaveStatus");
-  status.textContent = "Fluxo salvo neste rascunho — clique em Salvar alterações pra publicar.";
-  status.className = "admin-status success";
+  status.textContent = "Publicando...";
+  status.className = "admin-status";
+
+  await saveAll();
+  flowDirty = false;
+
+  const globalStatusOk = document.getElementById("saveStatus").className.includes("success");
+  status.textContent = globalStatusOk ? "Publicado com sucesso!" : "Erro ao publicar. Tente novamente.";
+  status.className = globalStatusOk ? "admin-status success" : "admin-status error";
 }
 
-function deleteCurrentFlow() {
+async function deleteCurrentFlow() {
   if (!currentFlowId) return;
-  if (!confirm("Excluir este fluxo?")) return;
+  if (!confirm("Excluir este fluxo? Isso já publica a remoção.")) return;
   delete flowsDraft[currentFlowId];
   currentFlowId = null;
   flowDirty = false;
   document.getElementById("flowEditorWrap").hidden = true;
   clearDisconnectButtons();
   renderFlowsList();
+  await saveAll();
 }
 
 function initFlowsTab() {
