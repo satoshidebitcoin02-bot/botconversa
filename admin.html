@@ -47,6 +47,11 @@
       </button>
       <div id="flowsSubmenuList" class="flows-submenu-list"></div>
     </div>
+    <button type="button" class="admin-tab-btn" data-tab="ads"><svg class="icon" width="16" height="16" aria-hidden="true"><use href="#i-megaphone"></use></svg> Anúncios</button>
+    <div class="admin-sidebar-spacer"></div>
+    <a href="index.html" target="_blank" class="admin-sidebar-chat-link">
+      <svg class="icon" width="16" height="16" aria-hidden="true"><use href="#i-message"></use></svg> Ver chat
+    </a>
   </nav>
 
   <main class="admin-main">
@@ -104,6 +109,37 @@
       <div class="admin-save-bar">
         <div id="saveStatusPersonas" class="admin-status"></div>
         <button id="saveBtnPersonas" class="admin-primary-btn">Salvar alterações</button>
+      </div>
+    </section>
+
+    <section id="tab-ads" class="admin-tab-panel" hidden>
+      <section class="admin-card">
+        <h2>Script no &lt;head&gt;</h2>
+        <p class="admin-hint">Script de inicialização da rede (ex: AdSense, MGID, AdsKeeper). Cole a tag <code>&lt;script&gt;</code> completa — ela será injetada no cabeçalho do chat.</p>
+        <textarea id="adsHeadScript" class="admin-code-field" rows="4" placeholder="<script async src=&quot;https://pagead2.googlesyndication.com/...&quot;></script>"></textarea>
+      </section>
+
+      <section class="admin-card">
+        <h2>Banner fixo (barra inferior)</h2>
+        <p class="admin-hint">HTML do banner fixo exibido na parte inferior do chat. Se vazio, a barra fica oculta.</p>
+        <textarea id="adsFixedBanner" class="admin-code-field" rows="4" placeholder="<ins class=&quot;adsbygoogle&quot; style=&quot;display:block&quot; data-ad-client=&quot;ca-pub-XXXXX&quot; data-ad-slot=&quot;XXXXX&quot;></ins>&#10;<script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>"></textarea>
+      </section>
+
+      <section class="admin-card">
+        <h2>Banner inline (entre mensagens)</h2>
+        <p class="admin-hint">HTML inserido entre as mensagens a cada 6 respostas recebidas. Se vazio, o banner de demonstração é usado.</p>
+        <textarea id="adsInlineBanner" class="admin-code-field" rows="4" placeholder="<ins class=&quot;adsbygoogle&quot; style=&quot;display:block&quot; data-ad-client=&quot;ca-pub-XXXXX&quot; data-ad-slot=&quot;XXXXX&quot;></ins>&#10;<script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>"></textarea>
+      </section>
+
+      <section class="admin-card">
+        <h2>Popup intersticial</h2>
+        <p class="admin-hint">HTML exibido no popup a cada 4 respostas. Se vazio, o popup de demonstração é usado; coloque um traço (<code>-</code>) para desativar completamente.</p>
+        <textarea id="adsInterstitial" class="admin-code-field" rows="4" placeholder="<ins class=&quot;adsbygoogle&quot; style=&quot;display:block&quot; data-ad-client=&quot;ca-pub-XXXXX&quot; data-ad-slot=&quot;XXXXX&quot;></ins>&#10;<script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>"></textarea>
+      </section>
+
+      <div class="admin-save-bar">
+        <div id="saveStatusAds" class="admin-status"></div>
+        <button id="saveBtnAds" class="admin-primary-btn">Salvar anúncios</button>
       </div>
     </section>
 

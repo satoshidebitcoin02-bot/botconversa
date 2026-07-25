@@ -59,6 +59,7 @@ async function loadConfig() {
   window.PERSONAS_FOR_ADMIN = personasDraft;
 
   populateAppearance();
+  populateAds();
   renderPersonaList();
 
   flowsDraft = JSON.parse(JSON.stringify(currentConfig.flows || {}));
@@ -132,7 +133,10 @@ function renderPersonaList() {
           <textarea class="p-opener" rows="2">${p.opener || ""}</textarea>
         </div>
       </div>
-      <button type="button" class="admin-secondary-btn remove-persona-btn" title="Remover personagem">${icon("trash", 14)}</button>
+      <div class="admin-persona-actions">
+        <a href="chat.html?id=${p.id}" target="_blank" class="admin-secondary-btn admin-test-chat-btn" title="Testar chat com este personagem">${icon("message", 14)} Testar</a>
+        <button type="button" class="admin-secondary-btn remove-persona-btn" title="Remover personagem">${icon("trash", 14)}</button>
+      </div>
     </div>
   `).join("");
 
@@ -207,11 +211,29 @@ function buildConfigFromForm() {
     soundsEnabled: soundsToggle.checked,
     personasList: personasDraft,
     flows: flowsDraft,
+    ads: {
+      headScript: document.getElementById("adsHeadScript").value,
+      fixedBanner: document.getElementById("adsFixedBanner").value,
+      inlineBanner: document.getElementById("adsInlineBanner").value,
+      interstitial: document.getElementById("adsInterstitial").value,
+    },
   };
 }
 
+function populateAds() {
+  const ads = currentConfig.ads || {};
+  document.getElementById("adsHeadScript").value = ads.headScript || "";
+  document.getElementById("adsFixedBanner").value = ads.fixedBanner || "";
+  document.getElementById("adsInlineBanner").value = ads.inlineBanner || "";
+  document.getElementById("adsInterstitial").value = ads.interstitial || "";
+}
+
 async function saveAll() {
-  const statuses = [document.getElementById("saveStatus"), document.getElementById("saveStatusPersonas")].filter(Boolean);
+  const statuses = [
+    document.getElementById("saveStatus"),
+    document.getElementById("saveStatusPersonas"),
+    document.getElementById("saveStatusAds"),
+  ].filter(Boolean);
   statuses.forEach(s => { s.textContent = "Salvando..."; s.className = "admin-status"; });
 
   const config = buildConfigFromForm();
@@ -231,5 +253,6 @@ async function saveAll() {
 
 document.getElementById("saveBtn").addEventListener("click", saveAll);
 document.getElementById("saveBtnPersonas").addEventListener("click", saveAll);
+document.getElementById("saveBtnAds").addEventListener("click", saveAll);
 
 loadConfig();

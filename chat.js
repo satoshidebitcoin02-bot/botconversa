@@ -16,12 +16,45 @@ const quickRepliesEl = document.getElementById("quickReplies");
 
 let persona = PERSONAS[0];
 let aiMsgCount = 0;
+let siteAds = {};
 const AD_EVERY_N_AI_MESSAGES = 4; // mostra um anúncio intersticial a cada N mensagens enviadas
+
+function runScriptsIn(container) {
+  container.querySelectorAll("script").forEach(old => {
+    const s = document.createElement("script");
+    [...old.attributes].forEach(a => s.setAttribute(a.name, a.value));
+    s.textContent = old.textContent;
+    old.parentNode ? old.parentNode.replaceChild(s, old) : document.head.appendChild(s);
+  });
+}
+
+function applyAds(config) {
+  siteAds = (config && config.ads) || {};
+
+  if (siteAds.headScript && siteAds.headScript.trim()) {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = siteAds.headScript;
+    tmp.querySelectorAll("script").forEach(s => {
+      const el = document.createElement("script");
+      [...s.attributes].forEach(a => el.setAttribute(a.name, a.value));
+      el.textContent = s.textContent;
+      document.head.appendChild(el);
+    });
+  }
+
+  const fixedAd = document.getElementById("fixedAd");
+  if (fixedAd) {
+    if (siteAds.fixedBanner && siteAds.fixedBanner.trim()) {
+      fixedAd.innerHTML = siteAds.fixedBanner;
+      fixedAd.hidden = false;
+      runScriptsIn(fixedAd);
+    } else {
+      fixedAd.hidden = true;
+    }
+  }
+}
 const history = [];
 
-async function fetchAiReply(text) {
-  return generateReply(text);
-}
 
 function addBubble(text, who) {
   const row = document.createElement("div");
@@ -87,17 +120,24 @@ function addContactBubble(name, phone) {
 }
 
 function addInlineAd() {
-  const ad = randomAd();
   const wrap = document.createElement("div");
   wrap.className = "ad-inline";
-  wrap.innerHTML = `
-    <div class="ad-banner">${icon("megaphone", 16)} ${ad.title}</div>
-    <div class="ad-meta">
-      <span>${ad.body}</span>
-      <span>${ad.label}</span>
-    </div>
-  `;
-  messagesEl.appendChild(wrap);
+
+  if (siteAds.inlineBanner && siteAds.inlineBanner.trim()) {
+    wrap.innerHTML = siteAds.inlineBanner;
+    messagesEl.appendChild(wrap);
+    runScriptsIn(wrap);
+  } else {
+    const ad = randomAd();
+    wrap.innerHTML = `
+      <div class="ad-banner">${icon("megaphone", 16)} ${ad.title}</div>
+      <div class="ad-meta">
+        <span>${ad.body}</span>
+        <span>${ad.label}</span>
+      </div>
+    `;
+    messagesEl.appendChild(wrap);
+  }
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
@@ -119,11 +159,28 @@ function hideTyping() {
 }
 
 function showAdOverlay() {
+  // traço explícito = popup desativado pelo admin
+  if (siteAds.interstitial && siteAds.interstitial.trim() === "-") return;
+
   const overlay = document.getElementById("adOverlay");
-  const ad = randomAd();
-  document.getElementById("adBigTitle").textContent = ad.title;
-  document.getElementById("adBigBody").textContent = ad.body;
+  const adBigTitle = document.getElementById("adBigTitle");
+  const adBigBody = document.getElementById("adBigBody");
+  const adCustomContent = document.getElementById("adCustomContent");
   const closeBtn = document.getElementById("adCloseBtn");
+
+  if (siteAds.interstitial && siteAds.interstitial.trim()) {
+    adBigTitle.textContent = "Anúncio";
+    adBigBody.hidden = true;
+    adCustomContent.innerHTML = siteAds.interstitial;
+    adCustomContent.hidden = false;
+    runScriptsIn(adCustomContent);
+  } else {
+    const ad = randomAd();
+    adBigTitle.textContent = ad.title;
+    adBigBody.textContent = ad.body;
+    adBigBody.hidden = false;
+    if (adCustomContent) adCustomContent.hidden = true;
+  }
   closeBtn.disabled = true;
 
   let secs = 5;
@@ -311,14 +368,7 @@ async function sendMessage() {
     flowRuntime.waitingForReply = false;
     const node = flowRuntime.nodes[flowRuntime.currentNodeId];
     await runFlowFrom(nextNodeId(node));
-    return;
   }
-
-  showTyping();
-  const minDelay = sleepRandom();
-  const [reply] = await Promise.all([fetchAiReply(text), minDelay]);
-  hideTyping();
-  deliverReply(reply);
 }
 
 sendBtn.addEventListener("click", sendMessage);
@@ -378,6 +428,7 @@ attachAudioBtn.addEventListener("click", toggleRecording);
   persona = personas.find(p => p.id === personaId) || personas[0];
   setSoundsEnabled(config.soundsEnabled);
   applyBackground(config);
+  applyAds(config);
 
   document.getElementById("hdrAvatar").src = persona.avatar;
   document.getElementById("hdrName").textContent = persona.name;
