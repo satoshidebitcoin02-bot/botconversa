@@ -412,6 +412,8 @@ body.admin-body {
   overflow: hidden;
 }
 
+.flow-editor-wrap[hidden] { display: none; }
+
 .flow-editor-wrap {
   height: 100%;
   display: flex;
@@ -726,10 +728,18 @@ textarea.df-field {
   position: fixed;
   inset: 0;
   background: rgba(10, 5, 20, 0.65);
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   z-index: 100;
+}
+
+/* CSS de autor sempre vence o [hidden] padrão do navegador — por isso
+   "display:flex" fixo acima escondia o atributo hidden e deixava o
+   modal sempre visível/clicável por cima de tudo, mesmo "fechado".
+   Só vira flex quando o atributo hidden é removido. */
+.df-modal-overlay:not([hidden]) {
+  display: flex;
 }
 
 .df-modal {
