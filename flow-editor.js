@@ -116,6 +116,47 @@ function nodeHtml(type, data) {
   return `<div class="df-node">${title}</div>`;
 }
 
+// ---- botão de desconectar no meio da linha ----
+function clearDisconnectButtons() {
+  document.querySelectorAll(".df-disconnect-btn").forEach(b => b.remove());
+}
+
+function renderDisconnectButtons() {
+  if (!dfEditor) return;
+  clearDisconnectButtons();
+  const precanvas = dfEditor.precanvas;
+
+  precanvas.querySelectorAll(".connection").forEach(connEl => {
+    const path = connEl.querySelector(".main-path");
+    if (!path) return;
+    const len = path.getTotalLength();
+    if (!len) return;
+
+    const classes = Array.from(connEl.classList);
+    const inNode = (classes.find(c => c.startsWith("node_in_node-")) || "").replace("node_in_node-", "");
+    const outNode = (classes.find(c => c.startsWith("node_out_node-")) || "").replace("node_out_node-", "");
+    const outputClass = classes.find(c => c.startsWith("output_"));
+    const inputClass = classes.find(c => c.startsWith("input_"));
+    if (!inNode || !outNode || !outputClass || !inputClass) return;
+
+    const mid = path.getPointAtLength(len / 2);
+    const btn = document.createElement("div");
+    btn.className = "df-disconnect-btn";
+    btn.title = "Desconectar";
+    btn.style.left = (mid.x - 9) + "px";
+    btn.style.top = (mid.y - 9) + "px";
+    btn.textContent = "×";
+    btn.addEventListener("mousedown", e => e.stopPropagation());
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      dfEditor.removeSingleConnection(outNode, inNode, outputClass, inputClass);
+      markFlowDirty();
+      renderDisconnectButtons();
+    });
+    precanvas.appendChild(btn);
+  });
+}
+
 function initDrawflow() {
   if (dfEditor) return;
   const container = document.getElementById("drawflowCanvas");
@@ -123,10 +164,12 @@ function initDrawflow() {
   dfEditor.reroute = false;
   dfEditor.start();
 
-  dfEditor.on("connectionCreated", markFlowDirty);
-  dfEditor.on("connectionRemoved", markFlowDirty);
-  dfEditor.on("nodeMoved", markFlowDirty);
-  dfEditor.on("nodeRemoved", markFlowDirty);
+  dfEditor.on("connectionCreated", () => { markFlowDirty(); renderDisconnectButtons(); });
+  dfEditor.on("connectionRemoved", () => { markFlowDirty(); renderDisconnectButtons(); });
+  dfEditor.on("nodeMoved", () => { markFlowDirty(); renderDisconnectButtons(); });
+  dfEditor.on("nodeRemoved", () => { markFlowDirty(); renderDisconnectButtons(); });
+  dfEditor.on("zoom", renderDisconnectButtons);
+  dfEditor.on("translate", renderDisconnectButtons);
 }
 
 function addNodeToCanvas(type, clientX, clientY) {
@@ -432,9 +475,11 @@ function openFlow(flowId) {
 
   initDrawflow();
   dfEditor.clear();
+  clearDisconnectButtons();
   if (flow.graph && flow.graph.drawflow) {
     dfEditor.import(flow.graph);
   }
+  renderDisconnectButtons();
 }
 
 function createNewFlow() {
@@ -465,6 +510,7 @@ function deleteCurrentFlow() {
   currentFlowId = null;
   flowDirty = false;
   document.getElementById("flowEditorWrap").hidden = true;
+  clearDisconnectButtons();
   renderFlowsList();
 }
 
