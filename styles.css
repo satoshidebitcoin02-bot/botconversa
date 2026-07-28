@@ -919,7 +919,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 14px;
   animation: ad-gate-in 0.18s ease;
 }
 .ad-gate-overlay[hidden] { display: none; }
@@ -932,13 +932,13 @@ body {
 .ad-gate-box {
   background: #fff;
   border-radius: 18px;
-  padding: 20px;
+  padding: 10px;
   width: 100%;
-  max-width: 420px;
+  max-width: 360px;
   box-shadow: 0 24px 60px rgba(0,0,0,0.45);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .ad-gate-label {
