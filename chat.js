@@ -462,16 +462,10 @@ pauseRecBtn.addEventListener("click", () => {
 
 // ---- inicialização ----
 (async function init() {
-  // Preenche o header imediatamente com os dados padrão (sem esperar a rede)
-  const defaultPersonas = mergedPersonas({});
-  persona = defaultPersonas.find(p => p.id === personaId) || defaultPersonas[0];
-  document.getElementById("hdrAvatar").src = persona.avatar;
-  document.getElementById("hdrName").textContent = persona.name;
-
-  // Atualiza com dados do config (pode sobrescrever se houver customização)
   const config = await loadSiteConfig();
   const personas = mergedPersonas(config);
   persona = personas.find(p => p.id === personaId) || personas[0];
+  if (!persona) return;
   setSoundsEnabled(config.soundsEnabled);
   applyColors(config);
   applyBackground(config);
