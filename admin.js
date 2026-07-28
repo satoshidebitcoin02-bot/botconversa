@@ -5,6 +5,7 @@ const logoImageFile = document.getElementById("logoImageFile");
 const backgroundInput = document.getElementById("backgroundInput");
 const backgroundFile = document.getElementById("backgroundFile");
 const backgroundPreview = document.getElementById("backgroundPreview");
+const removeBgBtn = document.getElementById("removeBgBtn");
 const soundsToggle = document.getElementById("soundsToggle");
 const personaList = document.getElementById("personaList");
 
@@ -59,7 +60,6 @@ async function loadConfig() {
   window.PERSONAS_FOR_ADMIN = personasDraft;
 
   populateAppearance();
-  populateAds();
   renderPersonaList();
 
   flowsDraft = JSON.parse(JSON.stringify(currentConfig.flows || {}));
@@ -81,14 +81,44 @@ function populateAppearance() {
   backgroundInput.value = currentConfig.background || "";
   updateBgPreview();
 
+  const defaults = { bg:"#ffffff", bgAlt:"#f5f6f7", blue:"#0084ff", text:"#050505", bubbleThem:"#ffffff", bubbleMeFrom:"#12a1ff", bubbleMeTo:"#7a4dff" };
+  const savedColors = currentConfig.colors || {};
+  for (const [key, def] of Object.entries(defaults)) {
+    const el = document.getElementById("color" + key.charAt(0).toUpperCase() + key.slice(1));
+    if (el) el.value = savedColors[key] || def;
+  }
+
   soundsToggle.checked = currentConfig.soundsEnabled !== false;
+
+  const ad = currentConfig.interstitialAd || {};
+  document.getElementById("interstitialEnabled").checked = !!ad.enabled;
+  document.getElementById("interstitialCode").value = ad.code || "";
+  document.getElementById("interstitialSeconds").value = ad.seconds ?? 5;
+  document.getElementById("interstitialWaitText").value = ad.waitText || "";
 }
 
 function updateBgPreview() {
-  backgroundPreview.style.backgroundImage = backgroundInput.value ? `url("${backgroundInput.value}")` : "none";
+  const has = !!backgroundInput.value;
+  backgroundPreview.style.backgroundImage = has ? `url("${backgroundInput.value}")` : "none";
+  removeBgBtn.hidden = !has;
 }
 
+const COLOR_DEFAULTS = { bg:"#ffffff", bgAlt:"#f5f6f7", blue:"#0084ff", text:"#050505", bubbleThem:"#ffffff", bubbleMeFrom:"#12a1ff", bubbleMeTo:"#7a4dff" };
+
+document.getElementById("resetColorsBtn").addEventListener("click", () => {
+  for (const [key, def] of Object.entries(COLOR_DEFAULTS)) {
+    const el = document.getElementById("color" + key.charAt(0).toUpperCase() + key.slice(1));
+    if (el) el.value = def;
+  }
+});
+
 backgroundInput.addEventListener("input", updateBgPreview);
+removeBgBtn.addEventListener("click", () => {
+  backgroundInput.value = "";
+  backgroundFile.value = "";
+  updateBgPreview();
+});
+
 backgroundFile.addEventListener("change", async () => {
   const file = backgroundFile.files[0];
   if (!file) return;
@@ -208,24 +238,25 @@ function buildConfigFromForm() {
       value: logoType === "image" ? logoImageInput.value.trim() : logoTextInput.value.trim(),
     },
     background: backgroundInput.value.trim(),
+    colors: {
+      bg:           document.getElementById("colorBg").value,
+      bgAlt:        document.getElementById("colorBgAlt").value,
+      blue:         document.getElementById("colorBlue").value,
+      text:         document.getElementById("colorText").value,
+      bubbleThem:   document.getElementById("colorBubbleThem").value,
+      bubbleMeFrom: document.getElementById("colorBubbleMeFrom").value,
+      bubbleMeTo:   document.getElementById("colorBubbleMeTo").value,
+    },
     soundsEnabled: soundsToggle.checked,
     personasList: personasDraft,
     flows: flowsDraft,
-    ads: {
-      headScript: document.getElementById("adsHeadScript").value,
-      fixedBanner: document.getElementById("adsFixedBanner").value,
-      inlineBanner: document.getElementById("adsInlineBanner").value,
-      interstitial: document.getElementById("adsInterstitial").value,
+    interstitialAd: {
+      enabled: document.getElementById("interstitialEnabled").checked,
+      code: document.getElementById("interstitialCode").value.trim(),
+      seconds: Number(document.getElementById("interstitialSeconds").value) || 0,
+      waitText: document.getElementById("interstitialWaitText").value.trim(),
     },
   };
-}
-
-function populateAds() {
-  const ads = currentConfig.ads || {};
-  document.getElementById("adsHeadScript").value = ads.headScript || "";
-  document.getElementById("adsFixedBanner").value = ads.fixedBanner || "";
-  document.getElementById("adsInlineBanner").value = ads.inlineBanner || "";
-  document.getElementById("adsInterstitial").value = ads.interstitial || "";
 }
 
 async function saveAll() {

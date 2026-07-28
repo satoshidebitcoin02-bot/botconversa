@@ -51,7 +51,7 @@ function messagePreview(message) {
 function buttonBadgesHtml(buttons) {
   const filled = (buttons || []).filter(b => (b.label || "").trim());
   if (!filled.length) return "";
-  return `<div class="df-node-badges">${filled.map(b => `<span class="df-badge">${escapeAttr(b.label).replace(/&quot;/g, '"')}</span>`).join("")}</div>`;
+  return `<div class="df-node-badges">${filled.map(b => `<span class="df-badge">${escapeAttr(b.label).replace(/&quot;/g, '"')}${b.url ? ' 🔗' : ''}</span>`).join("")}</div>`;
 }
 
 function nodeHtml(type, data) {
@@ -83,7 +83,7 @@ function nodeHtml(type, data) {
   }
   if (type === "audio") {
     return `<div class="df-node">${title}
-      <label class="df-upload-btn">${icon("folder", 12)} Enviar arquivo<input type="file" accept="audio/*" class="df-file" data-field="url" hidden /></label>
+      <label class="df-upload-btn">${icon("folder", 12)}<span>Enviar arquivo</span><input type="file" accept="audio/*" class="df-file" data-field="url" hidden /></label>
       <div class="df-file-name">${data.url ? icon("check", 11) + " arquivo carregado" : "nenhum arquivo"}</div>
     </div>`;
   }
@@ -93,18 +93,20 @@ function nodeHtml(type, data) {
       <div class="df-thumb-wrap">
         <img class="df-thumb" src="${u}" alt="" />
         <button type="button" class="df-thumb-remove" data-idx="${i}" title="Remover">×</button>
+        ${i > 0 ? `<button type="button" class="df-thumb-move df-thumb-move-left" data-idx="${i}" title="Mover para esquerda">‹</button>` : ""}
+        ${i < urls.length - 1 ? `<button type="button" class="df-thumb-move df-thumb-move-right" data-idx="${i}" title="Mover para direita">›</button>` : ""}
       </div>
     `).join("");
     return `<div class="df-node">${title}
-      <label class="df-upload-btn">${icon("folder", 12)} Adicionar imagem<input type="file" accept="image/*" class="df-file-multi" hidden /></label>
+      <label class="df-upload-btn">${icon("folder", 12)}<span>Adicionar imagem</span><input type="file" accept="image/*" class="df-file-multi" hidden /></label>
       <div class="df-hint">${urls.length > 1 ? "Vira um carrossel no chat" : "Adicione mais de uma pra virar carrossel"}</div>
       <div class="df-media-thumbs">${thumbs}</div>
     </div>`;
   }
   if (type === "document") {
     return `<div class="df-node">${title}
-      <label class="df-upload-btn">${icon("folder", 12)} Enviar arquivo<input type="file" class="df-file" data-field="url" data-filename-field="filename" hidden /></label>
-      <div class="df-file-name">${data.filename ? icon("file-text", 11) + " " + data.filename : "nenhum arquivo"}</div>
+      <label class="df-upload-btn">${icon("folder", 12)}<span>Enviar arquivo</span><input type="file" class="df-file" data-field="url" data-filename-field="filename" hidden /></label>
+      <div class="df-file-name">${data.filename ? icon("file-text", 11) + "<span>" + data.filename + "</span>" : "nenhum arquivo"}</div>
     </div>`;
   }
   if (type === "contact") {
@@ -170,6 +172,22 @@ function initDrawflow() {
   dfEditor.on("nodeRemoved", () => { markFlowDirty(); renderDisconnectButtons(); });
   dfEditor.on("zoom", renderDisconnectButtons);
   dfEditor.on("translate", renderDisconnectButtons);
+
+  // Drawflow só ativa o pan quando ev.target tem classe "drawflow" (o precanvas).
+  // Quando o canvas foi transladado, cliques nas áreas vazias atingem o container
+  // externo em vez do precanvas — esse listener corrige isso.
+  container.addEventListener("mousedown", e => {
+    if (e.target === container) {
+      dfEditor.editor_selected = true;
+    }
+  }, true); // capture: roda antes do listener interno do Drawflow
+
+  let rafPending = false;
+  container.addEventListener("mousemove", () => {
+    if (!dfEditor.drag || rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(() => { renderDisconnectButtons(); rafPending = false; });
+  });
 }
 
 function addNodeToCanvas(type, clientX, clientY) {
@@ -268,20 +286,59 @@ function hideSuggestions() {
 // ---- modal de edição do nó Texto ----
 let editingNodeId = null;
 
+const MAX_BUTTONS = 4;
+
+function renderModalButtons(buttons) {
+  const container = document.getElementById("dfModalButtons");
+  container.innerHTML = buttons.map((b, i) => `
+    <div class="df-row df-btn-row">
+      <span class="df-branch-letter">${String.fromCharCode(65 + i)}</span>
+      <div class="df-btn-fields">
+        <input type="text" class="df-modal-btn-field" data-idx="${i}" placeholder="Texto do botão" value="${escapeAttr(b.label)}" />
+        <input type="url" class="df-modal-btn-url" data-idx="${i}" placeholder="Link (opcional, ex: https://...)" value="${escapeAttr(b.url || '')}" />
+      </div>
+      ${i > 0 ? `<button type="button" class="df-remove-btn-btn" data-idx="${i}" title="Remover">×</button>` : ""}
+    </div>
+  `).join("");
+
+  const addBtn = document.createElement("button");
+  addBtn.type = "button";
+  addBtn.className = "add-button-btn admin-secondary-btn";
+  addBtn.textContent = "+ Adicionar botão";
+  addBtn.hidden = buttons.length >= MAX_BUTTONS;
+  addBtn.addEventListener("click", () => {
+    const current = collectModalButtons();
+    if (current.length >= MAX_BUTTONS) return;
+    current.push({ label: "", url: "" });
+    renderModalButtons(current);
+  });
+  container.appendChild(addBtn);
+
+  container.querySelectorAll(".df-remove-btn-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const current = collectModalButtons();
+      current.splice(Number(btn.dataset.idx), 1);
+      renderModalButtons(current);
+    });
+  });
+}
+
+function collectModalButtons() {
+  const labelInputs = Array.from(document.querySelectorAll("#dfModalButtons .df-modal-btn-field"));
+  const urlInputs   = Array.from(document.querySelectorAll("#dfModalButtons .df-modal-btn-url"));
+  return labelInputs.map((inp, i) => ({
+    label: inp.value,
+    url:   urlInputs[i] ? urlInputs[i].value.trim() : "",
+  }));
+}
+
 function openTextNodeModal(nodeId) {
   editingNodeId = nodeId;
   const nodeData = dfEditor.getNodeFromId(nodeId).data;
-  const buttons = (nodeData.buttons && nodeData.buttons.length)
-    ? nodeData.buttons
-    : [{ label: "" }, { label: "" }, { label: "" }, { label: "" }];
+  const buttons = (nodeData.buttons || []).filter(b => b.label || b.url);
 
   document.getElementById("dfModalMessage").value = nodeData.message || "";
-  document.getElementById("dfModalButtons").innerHTML = buttons.map((b, i) => `
-    <div class="df-row">
-      <span class="df-branch-letter">${String.fromCharCode(65 + i)}</span>
-      <input type="text" class="df-modal-btn-field" data-idx="${i}" placeholder="Botão (opcional)" value="${escapeAttr(b.label)}" />
-    </div>
-  `).join("");
+  renderModalButtons(buttons);
 
   document.getElementById("dfNodeModalOverlay").hidden = false;
   document.getElementById("dfModalMessage").focus();
@@ -312,8 +369,7 @@ function saveNodeModal() {
   if (!editingNodeId) return;
   const nodeData = dfEditor.getNodeFromId(editingNodeId).data;
   nodeData.message = document.getElementById("dfModalMessage").value;
-  nodeData.buttons = Array.from(document.querySelectorAll("#dfModalButtons .df-modal-btn-field"))
-    .map(inp => ({ label: inp.value }));
+  nodeData.buttons = collectModalButtons();
   dfEditor.updateNodeDataFromId(editingNodeId, nodeData);
   markFlowDirty();
   updateTextNodeCard(editingNodeId, nodeData);
@@ -355,6 +411,23 @@ function bindCanvasDelegation() {
       dfEditor.updateNodeDataFromId(nodeId, nodeData);
       nodeEl.querySelector(".df-node").outerHTML = nodeHtml("media", nodeData);
       markFlowDirty();
+      return;
+    }
+
+    const thumbMove = e.target.closest(".df-thumb-move");
+    if (thumbMove) {
+      const nodeEl = thumbMove.closest(".drawflow-node");
+      const nodeId = nodeEl.id.replace("node-", "");
+      const nodeData = dfEditor.getNodeFromId(nodeId).data;
+      const idx = Number(thumbMove.dataset.idx);
+      const delta = thumbMove.classList.contains("df-thumb-move-left") ? -1 : 1;
+      const swap = idx + delta;
+      if (swap >= 0 && swap < nodeData.urls.length) {
+        [nodeData.urls[idx], nodeData.urls[swap]] = [nodeData.urls[swap], nodeData.urls[idx]];
+        dfEditor.updateNodeDataFromId(nodeId, nodeData);
+        nodeEl.querySelector(".df-node").outerHTML = nodeHtml("media", nodeData);
+        markFlowDirty();
+      }
       return;
     }
 
@@ -408,7 +481,7 @@ function bindCanvasDelegation() {
     dfEditor.updateNodeDataFromId(nodeId, nodeData);
     markFlowDirty();
     const label = nodeEl.querySelector(".df-file-name");
-    if (label) label.innerHTML = e.target.dataset.filenameField ? icon("file-text", 11) + " " + file.name : icon("check", 11) + " arquivo carregado";
+    if (label) label.innerHTML = e.target.dataset.filenameField ? icon("file-text", 11) + "<span>" + file.name + "</span>" : icon("check", 11) + " arquivo carregado";
   });
 }
 

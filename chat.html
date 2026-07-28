@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
 <title>Conversa — BOT Companion</title>
-<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body>
 <svg style="display:none" aria-hidden="true">
@@ -54,35 +54,48 @@
   <div class="quick-replies" id="quickReplies"></div>
 
   <div class="composer">
-    <button id="attachPhotoBtn" class="icon-btn" title="Enviar foto" type="button"><svg class="icon" width="18" height="18" aria-hidden="true"><use href="#i-camera"></use></svg></button>
-    <button id="attachAudioBtn" class="icon-btn" title="Gravar áudio" type="button"><svg class="icon" width="18" height="18" aria-hidden="true"><use href="#i-mic"></use></svg></button>
-    <input id="photoInput" type="file" accept="image/*" hidden />
-    <input id="msgInput" type="text" placeholder="Aa" autocomplete="off" />
-    <button id="sendBtn" class="send-btn" title="Enviar">
-      <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#i-send"></use></svg>
+    <!-- Câmera -->
+    <button id="attachPhotoBtn" class="icon-btn composer-side" title="Enviar foto" type="button">
+      <svg class="icon" width="20" height="20" aria-hidden="true"><use href="#i-camera"></use></svg>
+    </button>
+
+    <!-- Pílula central -->
+    <div class="composer-pill">
+      <button class="icon-btn emoji-btn" type="button" title="Emoji" tabindex="-1">
+        <svg class="icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+      </button>
+
+      <input id="msgInput" type="text" placeholder="Digite uma mensagem" autocomplete="off" />
+      <input id="photoInput" type="file" accept="image/*" hidden />
+
+      <!-- Barra de gravação (substitui o input) -->
+      <div id="recordingBar" class="recording-bar" hidden>
+        <span class="rec-dot"></span>
+        <span class="rec-timer" id="recTimer">0:00</span>
+        <div class="rec-waves">
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <button id="pauseRecBtn" class="icon-btn rec-pause" type="button" title="Pausar">
+          <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Botão direito: mic / enviar -->
+    <button id="sendBtn" class="send-btn send-btn--mic" title="Gravar áudio">
+      <svg class="icon icon-mic" width="20" height="20" aria-hidden="true"><use href="#i-mic"></use></svg>
+      <svg class="icon icon-send" width="20" height="20" aria-hidden="true" hidden><use href="#i-send"></use></svg>
     </button>
   </div>
 
-  <div class="fixed-ad" id="fixedAd" hidden></div>
 </div>
 
-<div class="ad-overlay" id="adOverlay">
-  <div class="ad-modal">
-    <div class="ad-banner-big" id="adBigTitle">Anúncio</div>
-    <div class="ad-body">
-      <p id="adBigBody">Conteúdo patrocinado</p>
-      <div id="adCustomContent" hidden></div>
-      <button id="adCloseBtn" disabled>Fechar (5)</button>
-      <div class="countdown">Você pode fechar o anúncio em instantes</div>
-    </div>
-  </div>
-</div>
-
-<script src="data.js"></script>
-<script src="config-store.js"></script>
-<script src="sound-effects.js"></script>
-<script src="icons.js"></script>
-<script src="viewport-fix.js"></script>
-<script src="chat.js"></script>
+<script src="data.js?v=4"></script>
+<script src="config-store.js?v=4"></script>
+<script src="sound-effects.js?v=4"></script>
+<script src="icons.js?v=4"></script>
+<script src="viewport-fix.js?v=4"></script>
+<script src="chat.js?v=6"></script>
 </body>
 </html>

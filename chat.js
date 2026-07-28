@@ -11,48 +11,11 @@ const inputEl = document.getElementById("msgInput");
 const sendBtn = document.getElementById("sendBtn");
 const photoInput = document.getElementById("photoInput");
 const attachPhotoBtn = document.getElementById("attachPhotoBtn");
-const attachAudioBtn = document.getElementById("attachAudioBtn");
 const quickRepliesEl = document.getElementById("quickReplies");
+const iconMic  = sendBtn.querySelector(".icon-mic");
+const iconSend = sendBtn.querySelector(".icon-send");
 
 let persona = PERSONAS[0];
-let aiMsgCount = 0;
-let siteAds = {};
-const AD_EVERY_N_AI_MESSAGES = 4; // mostra um anúncio intersticial a cada N mensagens enviadas
-
-function runScriptsIn(container) {
-  container.querySelectorAll("script").forEach(old => {
-    const s = document.createElement("script");
-    [...old.attributes].forEach(a => s.setAttribute(a.name, a.value));
-    s.textContent = old.textContent;
-    old.parentNode ? old.parentNode.replaceChild(s, old) : document.head.appendChild(s);
-  });
-}
-
-function applyAds(config) {
-  siteAds = (config && config.ads) || {};
-
-  if (siteAds.headScript && siteAds.headScript.trim()) {
-    const tmp = document.createElement("div");
-    tmp.innerHTML = siteAds.headScript;
-    tmp.querySelectorAll("script").forEach(s => {
-      const el = document.createElement("script");
-      [...s.attributes].forEach(a => el.setAttribute(a.name, a.value));
-      el.textContent = s.textContent;
-      document.head.appendChild(el);
-    });
-  }
-
-  const fixedAd = document.getElementById("fixedAd");
-  if (fixedAd) {
-    if (siteAds.fixedBanner && siteAds.fixedBanner.trim()) {
-      fixedAd.innerHTML = siteAds.fixedBanner;
-      fixedAd.hidden = false;
-      runScriptsIn(fixedAd);
-    } else {
-      fixedAd.hidden = true;
-    }
-  }
-}
 const history = [];
 
 
@@ -73,14 +36,74 @@ function addBubble(text, who) {
 function addMediaBubble(kind, url, who) {
   const row = document.createElement("div");
   row.className = `msg-row ${who}`;
-  const media = kind === "image"
-    ? `<img class="bubble-image" src="${url}" alt="mídia" />`
-    : `<audio class="bubble-audio" controls src="${url}"></audio>`;
+  const media = `<img class="bubble-image" src="${url}" alt="mídia" />`;
   if (who === "them") {
     row.innerHTML = `<img class="mini-avatar" src="${persona.avatar}" alt="" /><div class="bubble bubble-media">${media}</div>`;
   } else {
     row.innerHTML = `<div class="bubble bubble-media">${media}</div>`;
   }
+  messagesEl.appendChild(row);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function addAudioBubble(url, who) {
+  const row = document.createElement("div");
+  row.className = `msg-row ${who}`;
+
+  const bars = Array.from({ length: 30 }, () => {
+    const h = 4 + Math.random() * 20;
+    const delay = (Math.random() * 0.6).toFixed(2);
+    return `<span class="audio-bar" style="height:${h}px;animation-delay:${delay}s"></span>`;
+  }).join("");
+
+  const meClass = who === "me" ? " audio-bubble-me" : "";
+  const bubbleHTML = `
+    <div class="audio-bubble${meClass}">
+      <button class="audio-play-btn">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="45" height="45"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="audio-waveform">${bars}</div>
+      <span class="audio-duration">0:00</span>
+      <audio src="${url}"></audio>
+    </div>`;
+
+  row.innerHTML = who === "them"
+    ? `<img class="mini-avatar" src="${persona.avatar}" alt="" />${bubbleHTML}`
+    : bubbleHTML;
+
+  const bubble = row.querySelector(".audio-bubble");
+  const btn    = row.querySelector(".audio-play-btn");
+  const durEl  = row.querySelector(".audio-duration");
+  const audio  = row.querySelector("audio");
+
+  const playIcon  = `<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"/></svg>`;
+  const pauseIcon = `<svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+
+  const fmt = s => {
+    if (!isFinite(s)) return "0:00";
+    return `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,"0")}`;
+  };
+
+  audio.addEventListener("loadedmetadata", () => { durEl.textContent = fmt(audio.duration); });
+  audio.addEventListener("timeupdate",     () => { durEl.textContent = fmt(audio.currentTime); });
+  audio.addEventListener("ended", () => {
+    btn.innerHTML = playIcon;
+    bubble.classList.remove("playing");
+    durEl.textContent = fmt(audio.duration);
+  });
+
+  btn.addEventListener("click", () => {
+    if (audio.paused) {
+      audio.play();
+      btn.innerHTML = pauseIcon;
+      bubble.classList.add("playing");
+    } else {
+      audio.pause();
+      btn.innerHTML = playIcon;
+      bubble.classList.remove("playing");
+    }
+  });
+
   messagesEl.appendChild(row);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
@@ -119,27 +142,6 @@ function addContactBubble(name, phone) {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-function addInlineAd() {
-  const wrap = document.createElement("div");
-  wrap.className = "ad-inline";
-
-  if (siteAds.inlineBanner && siteAds.inlineBanner.trim()) {
-    wrap.innerHTML = siteAds.inlineBanner;
-    messagesEl.appendChild(wrap);
-    runScriptsIn(wrap);
-  } else {
-    const ad = randomAd();
-    wrap.innerHTML = `
-      <div class="ad-banner">${icon("megaphone", 16)} ${ad.title}</div>
-      <div class="ad-meta">
-        <span>${ad.body}</span>
-        <span>${ad.label}</span>
-      </div>
-    `;
-    messagesEl.appendChild(wrap);
-  }
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-}
 
 function showTyping() {
   const row = document.createElement("div");
@@ -158,63 +160,10 @@ function hideTyping() {
   if (row) row.remove();
 }
 
-function showAdOverlay() {
-  // traço explícito = popup desativado pelo admin
-  if (siteAds.interstitial && siteAds.interstitial.trim() === "-") return;
-
-  const overlay = document.getElementById("adOverlay");
-  const adBigTitle = document.getElementById("adBigTitle");
-  const adBigBody = document.getElementById("adBigBody");
-  const adCustomContent = document.getElementById("adCustomContent");
-  const closeBtn = document.getElementById("adCloseBtn");
-
-  if (siteAds.interstitial && siteAds.interstitial.trim()) {
-    adBigTitle.textContent = "Anúncio";
-    adBigBody.hidden = true;
-    adCustomContent.innerHTML = siteAds.interstitial;
-    adCustomContent.hidden = false;
-    runScriptsIn(adCustomContent);
-  } else {
-    const ad = randomAd();
-    adBigTitle.textContent = ad.title;
-    adBigBody.textContent = ad.body;
-    adBigBody.hidden = false;
-    if (adCustomContent) adCustomContent.hidden = true;
-  }
-  closeBtn.disabled = true;
-
-  let secs = 5;
-  closeBtn.textContent = `Fechar (${secs})`;
-  overlay.classList.add("show");
-
-  const timer = setInterval(() => {
-    secs -= 1;
-    if (secs <= 0) {
-      clearInterval(timer);
-      closeBtn.disabled = false;
-      closeBtn.textContent = "Fechar";
-    } else {
-      closeBtn.textContent = `Fechar (${secs})`;
-    }
-  }, 1000);
-
-  closeBtn.onclick = () => {
-    if (closeBtn.disabled) return;
-    overlay.classList.remove("show");
-  };
-}
-
 function deliverReply(text) {
   addBubble(text, "them");
   playReceiveSound();
   history.push({ role: "assistant", content: text });
-  aiMsgCount += 1;
-
-  if (aiMsgCount % AD_EVERY_N_AI_MESSAGES === 0) {
-    showAdOverlay();
-  } else if (aiMsgCount % 6 === 0) {
-    addInlineAd();
-  }
 }
 
 function sleepRandom() {
@@ -270,7 +219,7 @@ async function runFlowFrom(nodeId) {
       deliverReply((node.data && node.data.message) || "…");
 
       const buttons = ((node.data && node.data.buttons) || [])
-        .map((b, i) => ({ label: (b.label || "").trim(), outputKey: `output_${i + 1}` }))
+        .map((b, i) => ({ label: (b.label || "").trim(), url: (b.url || "").trim(), outputKey: `output_${i + 1}` }))
         .filter(b => b.label);
 
       if (buttons.length > 0) {
@@ -293,7 +242,7 @@ async function runFlowFrom(nodeId) {
       showTyping();
       await sleepRandom();
       hideTyping();
-      addMediaBubble("audio", (node.data && node.data.url) || "", "them");
+      addAudioBubble((node.data && node.data.url) || "", "them");
       playReceiveSound();
       id = nextNodeId(node);
     } else if (node.name === "media") {
@@ -328,20 +277,37 @@ async function runFlowFrom(nodeId) {
   }
 }
 
+function clearInlineButtons() {
+  const old = document.getElementById("inlineButtons");
+  if (old) old.remove();
+}
+
 function renderTextButtons(buttons) {
-  quickRepliesEl.innerHTML = "";
+  clearInlineButtons();
+  const row = document.createElement("div");
+  row.id = "inlineButtons";
+  row.className = "inline-buttons-row";
   buttons.forEach(btn => {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "quick-reply-btn";
     b.textContent = btn.label;
     b.addEventListener("click", () => handleTextButtonClick(btn));
-    quickRepliesEl.appendChild(b);
+    row.appendChild(b);
   });
+  messagesEl.appendChild(row);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
 async function handleTextButtonClick(btn) {
-  quickRepliesEl.innerHTML = "";
+  clearInlineButtons();
+
+  if (btn.url) {
+    const url = /^https?:\/\//i.test(btn.url) ? btn.url : "https://" + btn.url;
+    window.open(url, "_blank", "noopener,noreferrer");
+    return;
+  }
+
   const nodeId = flowRuntime.pendingButtonNodeId;
   flowRuntime.pendingButtonNodeId = null;
   if (!nodeId || !flowRuntime.nodes) return;
@@ -354,14 +320,29 @@ async function handleTextButtonClick(btn) {
   await runFlowFrom(nextNodeId(node, btn.outputKey));
 }
 
+function setSendMode(hasText) {
+  if (hasText) {
+    sendBtn.classList.remove("send-btn--mic");
+    sendBtn.title = "Enviar";
+    iconMic.setAttribute("hidden", "");
+    iconSend.removeAttribute("hidden");
+  } else {
+    sendBtn.classList.add("send-btn--mic");
+    sendBtn.title = "Gravar áudio";
+    iconMic.removeAttribute("hidden");
+    iconSend.setAttribute("hidden", "");
+  }
+}
+
 async function sendMessage() {
   const text = inputEl.value.trim();
   if (!text) return;
-  quickRepliesEl.innerHTML = "";
+  clearInlineButtons();
   flowRuntime.pendingButtonNodeId = null;
   addBubble(text, "me");
   playSendSound();
   inputEl.value = "";
+  setSendMode(false);
   history.push({ role: "user", content: text });
 
   if (flowRuntime.waitingForReply && flowRuntime.nodes) {
@@ -371,7 +352,15 @@ async function sendMessage() {
   }
 }
 
-sendBtn.addEventListener("click", sendMessage);
+sendBtn.addEventListener("click", () => {
+  if (inputEl.value.trim()) {
+    sendMessage();
+  } else {
+    toggleRecording();
+  }
+});
+
+inputEl.addEventListener("input", () => setSendMode(inputEl.value.trim().length > 0));
 inputEl.addEventListener("keydown", e => {
   if (e.key === "Enter") sendMessage();
 });
@@ -391,6 +380,41 @@ photoInput.addEventListener("change", () => {
 let mediaRecorder = null;
 let audioChunks = [];
 let isRecording = false;
+let recStream = null;
+let recTimerInterval = null;
+
+const recordingBar  = document.getElementById("recordingBar");
+const recTimerEl    = document.getElementById("recTimer");
+const pauseRecBtn   = document.getElementById("pauseRecBtn");
+const pillInput     = document.getElementById("msgInput");
+
+function startRecTimer() {
+  let secs = 0;
+  recTimerEl.textContent = "0:00";
+  recTimerInterval = setInterval(() => {
+    secs++;
+    recTimerEl.textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}`;
+  }, 1000);
+}
+
+function stopRecTimer() {
+  clearInterval(recTimerInterval);
+  recTimerInterval = null;
+}
+
+function enterRecordingUI() {
+  attachPhotoBtn.hidden = true;
+  pillInput.hidden      = true;
+  recordingBar.hidden   = false;
+  setSendMode(true);
+}
+
+function leaveRecordingUI() {
+  attachPhotoBtn.hidden = false;
+  pillInput.hidden      = false;
+  recordingBar.hidden   = true;
+  setSendMode(pillInput.value.trim().length > 0);
+}
 
 async function toggleRecording() {
   if (isRecording) {
@@ -398,38 +422,59 @@ async function toggleRecording() {
     return;
   }
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorder = new MediaRecorder(stream);
+    recStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(recStream);
     audioChunks = [];
     mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
     mediaRecorder.onstop = () => {
       const blob = new Blob(audioChunks, { type: "audio/webm" });
       const url = URL.createObjectURL(blob);
-      addMediaBubble("audio", url, "me");
+      addAudioBubble(url, "me");
       playSendSound();
-      stream.getTracks().forEach(t => t.stop());
+      recStream.getTracks().forEach(t => t.stop());
       isRecording = false;
-      attachAudioBtn.classList.remove("recording");
+      stopRecTimer();
+      leaveRecordingUI();
     };
     mediaRecorder.start();
     isRecording = true;
-    attachAudioBtn.classList.add("recording");
+    enterRecordingUI();
+    startRecTimer();
   } catch {
     alert("Não foi possível acessar o microfone.");
   }
 }
 
-attachAudioBtn.addEventListener("click", toggleRecording);
+pauseRecBtn.addEventListener("click", () => {
+  if (!mediaRecorder) return;
+  if (mediaRecorder.state === "recording") {
+    mediaRecorder.pause();
+    clearInterval(recTimerInterval);
+    recTimerInterval = null;
+    pauseRecBtn.innerHTML = `<svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+  } else if (mediaRecorder.state === "paused") {
+    mediaRecorder.resume();
+    startRecTimer();
+    pauseRecBtn.innerHTML = `<svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+  }
+});
+
 
 // ---- inicialização ----
 (async function init() {
+  // Preenche o header imediatamente com os dados padrão (sem esperar a rede)
+  const defaultPersonas = mergedPersonas({});
+  persona = defaultPersonas.find(p => p.id === personaId) || defaultPersonas[0];
+  document.getElementById("hdrAvatar").src = persona.avatar;
+  document.getElementById("hdrName").textContent = persona.name;
+
+  // Atualiza com dados do config (pode sobrescrever se houver customização)
   const config = await loadSiteConfig();
   const personas = mergedPersonas(config);
   persona = personas.find(p => p.id === personaId) || personas[0];
   setSoundsEnabled(config.soundsEnabled);
+  applyColors(config);
   applyBackground(config);
-  applyAds(config);
-
   document.getElementById("hdrAvatar").src = persona.avatar;
   document.getElementById("hdrName").textContent = persona.name;
 

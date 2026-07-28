@@ -205,6 +205,22 @@ body.admin-body {
 
 .admin-upload-btn:hover { background: #eceef0; }
 
+.admin-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid #ffd0d0;
+  background: #fff5f5;
+  font-size: 12.5px;
+  cursor: pointer;
+  color: #c0392b;
+}
+
+.admin-remove-btn:hover { background: #ffe0e0; }
+
 .admin-persona-fields .admin-upload-btn {
   margin-top: 4px;
   padding: 5px 10px;
@@ -454,7 +470,7 @@ body.admin-body {
 .flow-persona-assign {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 14px;
+  gap: 4px 10px;
   font-size: 12.5px;
   color: var(--text-dim);
 }
@@ -462,8 +478,12 @@ body.admin-body {
 .flow-persona-check {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   white-space: nowrap;
+}
+
+.flow-persona-check input[type="checkbox"] {
+  margin: 0;
 }
 
 .flow-toolbar-actions {
@@ -515,13 +535,33 @@ body.admin-body {
 
 .palette-item:hover { border-color: var(--purple); }
 
+/* ícones coloridos por tipo de nó */
+.palette-item[data-node="delay"]      .icon { color: #f59e0b; }
+.palette-item[data-node="randomizer"] .icon { color: var(--purple); }
+.palette-item[data-node="wait"]       .icon { color: #06b6d4; }
+.palette-item[data-node="audio"]      .icon { color: #10b981; }
+.palette-item[data-node="contact"]    .icon { color: var(--blue); }
+.palette-item[data-node="document"]   .icon { color: #f97316; }
+.palette-item[data-node="media"]      .icon { color: #ec4899; }
+.palette-item[data-node="text"]       .icon { color: var(--blue); }
+
 .drawflow-canvas {
   flex: 1;
   min-width: 0;
   background: #1c1a26;
-  background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
-  background-size: 18px 18px;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.11) 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
   position: relative;
+  overflow: hidden;
+}
+
+.drawflow-canvas > .drawflow {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: transparent !important;
 }
 
 /* reset do visual padrão do Drawflow — só o .df-node interno desenha a caixa.
@@ -860,12 +900,45 @@ textarea.df-field {
   gap: 8px;
 }
 
-.df-modal-btn-field {
+.df-btn-fields {
   flex: 1;
-  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.df-modal-btn-field,
+.df-modal-btn-url {
+  width: 100%;
+  padding: 7px 10px;
   border-radius: 8px;
   border: 1px solid var(--border);
   font-size: 13px;
+  box-sizing: border-box;
+}
+
+.df-modal-btn-url {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.df-remove-btn-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 6px;
+}
+
+.df-remove-btn-btn:hover {
+  background: #ffe0e0;
+  color: #e0245e;
 }
 
 .df-modal-footer {
@@ -982,6 +1055,37 @@ textarea.df-field {
   font-size: 11.5px;
 }
 
+.admin-ad-size {
+  font-size: 11px;
+  font-weight: 500;
+  color: #7a6200;
+  background: #fff3cd;
+  border: 1px solid #f0c000;
+  border-radius: 4px;
+  padding: 2px 7px;
+  margin-left: 6px;
+  vertical-align: middle;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.admin-ad-tip {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+  background: #fffbe6;
+  border-left: 3px solid #f0c000;
+  border-radius: 0 6px 6px 0;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.admin-ad-tip em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .admin-code-field {
   width: 100%;
   box-sizing: border-box;
@@ -1064,4 +1168,37 @@ textarea.df-field {
   gap: 5px;
   text-decoration: none;
   white-space: nowrap;
+}
+
+/* ---------- Grid de cores ---------- */
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px 16px;
+}
+
+.color-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.color-row:hover { border-color: var(--blue); }
+
+.color-row input[type="color"] {
+  width: 34px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
 }

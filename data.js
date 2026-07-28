@@ -73,58 +73,6 @@ const PERSONAS = [
   },
 ];
 
-// Banco de respostas roteirizadas por "intenção" simples detectada na mensagem do usuário.
-const RESPONSE_BANK = {
-  greeting: [
-    "Oi! Que bom te ver por aqui 😊",
-    "Olá! Tava justamente pensando em quem apareceria no chat.",
-    "Ei! Bom te falar de novo.",
-  ],
-  howAreYou: [
-    "Tô bem, obrigada por perguntar! E você, como tá?",
-    "Indo bem por aqui! Me conta como foi seu dia.",
-    "Tudo tranquilo. E aí, novidades?",
-  ],
-  compliment: [
-    "Haha, que gentil da sua parte 😄",
-    "Aaah, obrigada! Você também parece ser gente boa.",
-    "Que fofo, obrigada por dizer isso!",
-  ],
-  question: [
-    "Boa pergunta! Deixa eu pensar... eu diria que sim.",
-    "Depende bastante, mas no geral eu acho que sim.",
-    "Hmm, nunca tinha pensado assim, mas gostei da pergunta.",
-  ],
-  bye: [
-    "Tá bom, até mais! Foi legal conversar 👋",
-    "Combinado, falamos depois!",
-    "Beleza, até a próxima conversa!",
-  ],
-  default: [
-    "Interessante, me conta mais sobre isso.",
-    "Sério? Não sabia disso, adorei saber.",
-    "Legal! E o que mais você curte fazer?",
-    "Haha entendi. Continua, tô curiosa pra saber o resto.",
-    "Faz sentido. E como você se sente em relação a isso?",
-  ],
-};
-
-function pickIntent(text) {
-  const t = text.toLowerCase();
-  if (/\b(oi|ola|olá|opa|eae|e ai|e aí)\b/.test(t)) return "greeting";
-  if (/(tudo bem|como (vc|você) (ta|tá|esta|está)|de boa)/.test(t)) return "howAreYou";
-  if (/(linda|linda|bonita|gata|maravilhosa|incrivel|incrível)/.test(t)) return "compliment";
-  if (/\?/.test(t)) return "question";
-  if (/\b(tchau|falou|até mais|ate mais|bjs|flw)\b/.test(t)) return "bye";
-  return "default";
-}
-
-function generateReply(text) {
-  const intent = pickIntent(text);
-  const options = RESPONSE_BANK[intent];
-  return options[Math.floor(Math.random() * options.length)];
-}
-
 // Anúncios fictícios (placeholders — nenhum link real)
 const ADS = [
   { label: "Patrocinado", title: "App Fitness Pro", body: "Treinos personalizados em 15 min por dia." },

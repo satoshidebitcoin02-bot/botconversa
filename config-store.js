@@ -3,9 +3,10 @@
 // local sem Functions), cai nos valores padrão sem quebrar o site.
 
 async function loadSiteConfig() {
+  const timeout = new Promise(resolve => setTimeout(() => resolve(null), 2000));
   try {
-    const res = await fetch("/api/config");
-    if (!res.ok) return {};
+    const res = await Promise.race([fetch("/api/config"), timeout]);
+    if (!res || !res.ok) return {};
     return await res.json();
   } catch {
     return {};
@@ -36,6 +37,24 @@ function applyLogo(config) {
     el.innerHTML = `<img src="${logo.value}" alt="logo" class="brand-logo-img" />`;
   } else {
     el.textContent = (logo && logo.value) || "chats";
+  }
+}
+
+function applyColors(config) {
+  const c = (config && config.colors) || {};
+  const root = document.documentElement;
+  const map = {
+    "--bg":             c.bg,
+    "--bg-alt":         c.bgAlt,
+    "--blue":           c.blue,
+    "--text":           c.text,
+    "--bubble-them":    c.bubbleThem,
+    "--bubble-me-from": c.bubbleMeFrom,
+    "--bubble-me-to":   c.bubbleMeTo,
+  };
+  for (const [prop, val] of Object.entries(map)) {
+    if (val) root.style.setProperty(prop, val);
+    else root.style.removeProperty(prop);
   }
 }
 

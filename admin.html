@@ -5,8 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Painel Admin — BOT Companion</title>
 <link rel="stylesheet" href="styles.css" />
+<style>
+  /* Cancela imediatamente o layout position:fixed do chat antes de qualquer CSS externo carregar */
+  html, body { position: static !important; overflow: auto !important; height: auto !important; inset: auto !important; }
+</style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/drawflow@0.0.59/dist/drawflow.min.css" />
-<link rel="stylesheet" href="admin.css" />
+<link rel="stylesheet" href="admin.css?v=5" />
 </head>
 <body class="admin-body">
 <svg style="display:none" aria-hidden="true">
@@ -76,11 +80,51 @@
       <section class="admin-card">
         <h2>Fundo da conversa</h2>
         <input id="backgroundInput" type="hidden" />
-        <label class="admin-upload-btn">
-          <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#i-folder"></use></svg> Enviar arquivo
-          <input id="backgroundFile" type="file" accept="image/*" hidden />
-        </label>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <label class="admin-upload-btn">
+            <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#i-folder"></use></svg> Enviar arquivo
+            <input id="backgroundFile" type="file" accept="image/*" hidden />
+          </label>
+          <button id="removeBgBtn" class="admin-remove-btn" hidden>
+            <svg class="icon" width="14" height="14" aria-hidden="true"><use href="#i-trash"></use></svg> Remover fundo
+          </button>
+        </div>
         <div id="backgroundPreview" class="admin-bg-preview"></div>
+      </section>
+
+      <section class="admin-card">
+        <h2>Cores</h2>
+        <div class="color-grid">
+          <label class="color-row">
+            <span>Fundo geral</span>
+            <input type="color" id="colorBg" value="#ffffff" />
+          </label>
+          <label class="color-row">
+            <span>Fundo secundário</span>
+            <input type="color" id="colorBgAlt" value="#f5f6f7" />
+          </label>
+          <label class="color-row">
+            <span>Cor principal</span>
+            <input type="color" id="colorBlue" value="#0084ff" />
+          </label>
+          <label class="color-row">
+            <span>Texto principal</span>
+            <input type="color" id="colorText" value="#050505" />
+          </label>
+          <label class="color-row">
+            <span>Bolha recebida</span>
+            <input type="color" id="colorBubbleThem" value="#ffffff" />
+          </label>
+          <label class="color-row">
+            <span>Bolha enviada (início)</span>
+            <input type="color" id="colorBubbleMeFrom" value="#12a1ff" />
+          </label>
+          <label class="color-row">
+            <span>Bolha enviada (fim)</span>
+            <input type="color" id="colorBubbleMeTo" value="#7a4dff" />
+          </label>
+        </div>
+        <button type="button" id="resetColorsBtn" class="admin-secondary-btn" style="margin-top:10px">Restaurar padrões</button>
       </section>
 
       <section class="admin-card">
@@ -114,32 +158,38 @@
 
     <section id="tab-ads" class="admin-tab-panel" hidden>
       <section class="admin-card">
-        <h2>Script no &lt;head&gt;</h2>
-        <p class="admin-hint">Script de inicialização da rede (ex: AdSense, MGID, AdsKeeper). Cole a tag <code>&lt;script&gt;</code> completa — ela será injetada no cabeçalho do chat.</p>
-        <textarea id="adsHeadScript" class="admin-code-field" rows="4" placeholder="<script async src=&quot;https://pagead2.googlesyndication.com/...&quot;></script>"></textarea>
+        <h2>Anúncio de entrada (Interstitial)</h2>
+        <p style="font-size:13px;color:var(--text-dim);margin:0 0 14px">Quando ativado, exibe um pop-up com o anúncio antes de cada conversa. O visitante vê o anúncio e depois clica em "Ir para o chat".</p>
+        <label class="admin-row">
+          <input id="interstitialEnabled" type="checkbox" />
+          Ativar anúncio de entrada
+        </label>
       </section>
 
       <section class="admin-card">
-        <h2>Banner fixo (barra inferior)</h2>
-        <p class="admin-hint">HTML do banner fixo exibido na parte inferior do chat. Se vazio, a barra fica oculta.</p>
-        <textarea id="adsFixedBanner" class="admin-code-field" rows="4" placeholder="<ins class=&quot;adsbygoogle&quot; style=&quot;display:block&quot; data-ad-client=&quot;ca-pub-XXXXX&quot; data-ad-slot=&quot;XXXXX&quot;></ins>&#10;<script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>"></textarea>
+        <h2>Código do anúncio</h2>
+        <p style="font-size:13px;color:var(--text-dim);margin:0 0 10px">Cole o código HTML/script do seu provedor (AdSense, MGID, AdsKeeper, Adsterra, etc.).</p>
+        <textarea id="interstitialCode" rows="8" placeholder="&lt;script&gt;...&lt;/script&gt; ou &lt;ins class=&quot;adsbygoogle&quot;...&gt;" style="width:100%;font-family:monospace;font-size:12.5px;resize:vertical"></textarea>
       </section>
 
       <section class="admin-card">
-        <h2>Banner inline (entre mensagens)</h2>
-        <p class="admin-hint">HTML inserido entre as mensagens a cada 6 respostas recebidas. Se vazio, o banner de demonstração é usado.</p>
-        <textarea id="adsInlineBanner" class="admin-code-field" rows="4" placeholder="<ins class=&quot;adsbygoogle&quot; style=&quot;display:block&quot; data-ad-client=&quot;ca-pub-XXXXX&quot; data-ad-slot=&quot;XXXXX&quot;></ins>&#10;<script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>"></textarea>
+        <h2>Tempo de espera</h2>
+        <p style="font-size:13px;color:var(--text-dim);margin:0 0 10px">Quantos segundos o visitante precisa aguardar antes de o botão "Ir para o chat" aparecer. Use 0 para mostrar o botão imediatamente.</p>
+        <div class="admin-row" style="gap:10px;align-items:center">
+          <input type="number" id="interstitialSeconds" min="0" max="60" value="5" style="width:80px" />
+          <span style="font-size:14px">segundos</span>
+        </div>
       </section>
 
       <section class="admin-card">
-        <h2>Popup intersticial</h2>
-        <p class="admin-hint">HTML exibido no popup a cada 4 respostas. Se vazio, o popup de demonstração é usado; coloque um traço (<code>-</code>) para desativar completamente.</p>
-        <textarea id="adsInterstitial" class="admin-code-field" rows="4" placeholder="<ins class=&quot;adsbygoogle&quot; style=&quot;display:block&quot; data-ad-client=&quot;ca-pub-XXXXX&quot; data-ad-slot=&quot;XXXXX&quot;></ins>&#10;<script>(adsbygoogle=window.adsbygoogle||[]).push({});</script>"></textarea>
+        <h2>Texto de espera</h2>
+        <p style="font-size:13px;color:var(--text-dim);margin:0 0 10px">Frase exibida no pop-up enquanto o visitante aguarda. Deixe em branco para não exibir nada.</p>
+        <input type="text" id="interstitialWaitText" placeholder="Ex: Aguarde, estamos chamando a Luna…" style="width:100%" />
       </section>
 
       <div class="admin-save-bar">
         <div id="saveStatusAds" class="admin-status"></div>
-        <button id="saveBtnAds" class="admin-primary-btn">Salvar anúncios</button>
+        <button id="saveBtnAds" class="admin-primary-btn">Salvar alterações</button>
       </div>
     </section>
 
@@ -203,7 +253,7 @@
 <script src="config-store.js"></script>
 <script src="icons.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/drawflow@0.0.59/dist/drawflow.min.js"></script>
-<script src="flow-editor.js"></script>
+<script src="flow-editor.js?v=3"></script>
 <script src="admin.js"></script>
 </body>
 </html>
