@@ -366,6 +366,16 @@ function updateTextNodeCard(nodeId, data) {
   }
 }
 
+function syncNodeHtml(nodeId) {
+  const nodeEl = document.getElementById("node-" + nodeId);
+  if (!nodeEl) return;
+  const moduleData = dfEditor.drawflow.drawflow;
+  for (const module of Object.keys(moduleData)) {
+    const internal = moduleData[module].data[nodeId] || moduleData[module].data[Number(nodeId)];
+    if (internal) { internal.html = nodeEl.innerHTML; break; }
+  }
+}
+
 function saveNodeModal() {
   if (!editingNodeId) return;
   const nodeData = dfEditor.getNodeFromId(editingNodeId).data;
@@ -375,6 +385,7 @@ function saveNodeModal() {
   dfEditor.updateNodeDataFromId(editingNodeId, nodeData);
   markFlowDirty();
   updateTextNodeCard(editingNodeId, nodeData);
+  syncNodeHtml(editingNodeId); // garante que o export captura o HTML atualizado
   closeNodeModal();
 }
 
