@@ -201,7 +201,7 @@ function addNodeToCanvas(type, clientX, clientY) {
   if (type === "randomizer") {
     initialData = { branches: [{ weight: 25 }, { weight: 25 }, { weight: 25 }, { weight: 25 }] };
   } else if (type === "text") {
-    initialData = { message: "", buttons: [{ label: "" }, { label: "" }, { label: "" }, { label: "" }] };
+    initialData = { message: "", typingSeconds: 1, buttons: [{ label: "" }, { label: "" }, { label: "" }, { label: "" }] };
   } else if (type === "media") {
     initialData = { urls: [] };
   }
@@ -338,6 +338,7 @@ function openTextNodeModal(nodeId) {
   const buttons = (nodeData.buttons || []).filter(b => b.label || b.url);
 
   document.getElementById("dfModalMessage").value = nodeData.message || "";
+  document.getElementById("dfModalTypingSeconds").value = nodeData.typingSeconds ?? 1;
   renderModalButtons(buttons);
 
   document.getElementById("dfNodeModalOverlay").hidden = false;
@@ -369,6 +370,7 @@ function saveNodeModal() {
   if (!editingNodeId) return;
   const nodeData = dfEditor.getNodeFromId(editingNodeId).data;
   nodeData.message = document.getElementById("dfModalMessage").value;
+  nodeData.typingSeconds = Number(document.getElementById("dfModalTypingSeconds").value) || 0;
   nodeData.buttons = collectModalButtons();
   dfEditor.updateNodeDataFromId(editingNodeId, nodeData);
   markFlowDirty();
@@ -450,6 +452,7 @@ function bindCanvasDelegation() {
     const nodeData = dfEditor.getNodeFromId(nodeId).data;
     const value = field.type === "number" ? Number(field.value) : field.value;
     setNestedField(nodeData, field.dataset.field, value);
+    field.setAttribute("value", String(field.value)); // persiste o atributo para o export do Drawflow
     dfEditor.updateNodeDataFromId(nodeId, nodeData);
     markFlowDirty();
   });
@@ -532,6 +535,23 @@ function getSelectedPersonaIds() {
   return Array.from(document.querySelectorAll("#flowPersonaAssign input:checked")).map(i => i.value);
 }
 
+function restoreNodeFieldValues() {
+  const exported = dfEditor.export().drawflow.Home.data;
+  Object.entries(exported).forEach(([id, node]) => {
+    const nodeEl = document.getElementById("node-" + id);
+    if (!nodeEl || !node.data) return;
+    nodeEl.querySelectorAll(".df-field[data-field]").forEach(field => {
+      const parts = field.dataset.field.split(".");
+      let val = node.data;
+      for (const part of parts) val = val != null ? val[isNaN(part) ? part : Number(part)] : undefined;
+      if (val != null) {
+        field.value = val;
+        field.setAttribute("value", String(val));
+      }
+    });
+  });
+}
+
 function openFlow(flowId) {
   if (currentFlowId && currentFlowId !== flowId && !confirmDiscardFlowChanges()) return;
 
@@ -551,6 +571,7 @@ function openFlow(flowId) {
   clearDisconnectButtons();
   if (flow.graph && flow.graph.drawflow) {
     dfEditor.import(flow.graph);
+    restoreNodeFieldValues();
   }
   renderDisconnectButtons();
 }

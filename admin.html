@@ -240,6 +240,11 @@
     <div class="df-modal-body">
       <label class="df-modal-label">Mensagem</label>
       <textarea id="dfModalMessage" rows="5" placeholder="Mensagem que ela envia..."></textarea>
+      <label class="df-modal-label" style="margin-top:12px">Tempo de digitação</label>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <input type="number" id="dfModalTypingSeconds" min="0" max="30" value="1" style="width:70px" />
+        <span style="font-size:13px;color:var(--text-dim)">segundos que aparece "digitando…" antes da mensagem</span>
+      </div>
       <label class="df-modal-label">Botões (opcional — deixe em branco pra não usar; se usar, o fluxo espera o clique)</label>
       <div id="dfModalButtons" class="df-modal-buttons"></div>
     </div>

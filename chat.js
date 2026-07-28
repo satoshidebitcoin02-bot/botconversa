@@ -213,9 +213,12 @@ async function runFlowFrom(nodeId) {
     if (!node) break;
 
     if (node.name === "text") {
-      showTyping();
-      await sleepRandom();
-      hideTyping();
+      const typingSecs = node.data && node.data.typingSeconds != null ? Number(node.data.typingSeconds) : 1;
+      if (typingSecs > 0) {
+        showTyping();
+        await new Promise(r => setTimeout(r, typingSecs * 1000));
+        hideTyping();
+      }
       deliverReply((node.data && node.data.message) || "…");
 
       const buttons = ((node.data && node.data.buttons) || [])
