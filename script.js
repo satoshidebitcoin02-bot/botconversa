@@ -4,6 +4,19 @@ let siteConfig = {};
 let adGateTimerInterval = null;
 let pendingChatUrl = null;
 
+function renderStories(personas) {
+  const el = document.getElementById("stories");
+  el.innerHTML = personas.map(p => `
+    <div class="story" data-chat-id="${p.id}">
+      <div class="avatar-wrap">
+        <img src="${p.avatar}" alt="${p.name}" />
+        <span class="dot"></span>
+      </div>
+      <span>${p.name}</span>
+    </div>
+  `).join("");
+}
+
 function renderConvoList(personas) {
   const el = document.getElementById("convoList");
   el.innerHTML = personas.map(p => `
