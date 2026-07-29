@@ -28,11 +28,11 @@ function renderConvoList(personas) {
       <div class="body">
         <div class="name-row">
           <span>${p.name}</span>
-          <span class="ai-pill">BOT</span>
+          <span class="ai-pill">ONLINE</span>
         </div>
         <div class="preview">${p.opener}</div>
       </div>
-      <div class="time">agora</div>
+      <div class="time">${p.time || "agora"}</div>
     </div>
   `).join("");
 }

@@ -3,11 +3,16 @@
 // admin.html não fica atrás de login — a URL não é linkada em nenhum
 // lugar do site público, então é "secreta por não estar visível".
 
-const KV_KEY = "site-config";
+const BASE_KEY = "site-config";
+
+function kvKey(request) {
+  const site = new URL(request.url).searchParams.get("site");
+  return site ? `${BASE_KEY}-${site}` : BASE_KEY;
+}
 
 export async function onRequestGet(context) {
-  const { env } = context;
-  const raw = await env.CONFIG_KV.get(KV_KEY);
+  const { request, env } = context;
+  const raw = await env.CONFIG_KV.get(kvKey(request));
   return new Response(raw || "{}", {
     headers: { "content-type": "application/json" },
   });
@@ -23,7 +28,7 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ error: "corpo inválido" }), { status: 400 });
   }
 
-  await env.CONFIG_KV.put(KV_KEY, JSON.stringify(body));
+  await env.CONFIG_KV.put(kvKey(request), JSON.stringify(body));
   return new Response(JSON.stringify({ ok: true }), {
     headers: { "content-type": "application/json" },
   });

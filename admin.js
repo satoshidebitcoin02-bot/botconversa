@@ -65,6 +65,7 @@ async function loadConfig() {
   flowsDraft = JSON.parse(JSON.stringify(currentConfig.flows || {}));
   renderFlowsList();
   initFlowsTab();
+  renderCampaignList();
 }
 
 function populateAppearance() {
@@ -159,6 +160,10 @@ function renderPersonaList() {
           </label>
         </div>
         <div>
+          <label>Horário na lista de conversas</label>
+          <input type="text" class="p-time" placeholder="agora" value="${(p.time || "").replace(/"/g, "&quot;")}" />
+        </div>
+        <div>
           <label>Primeira mensagem (usada só se nenhum fluxo estiver associado a este personagem)</label>
           <textarea class="p-opener" rows="2">${p.opener || ""}</textarea>
         </div>
@@ -190,7 +195,7 @@ function renderPersonaList() {
     });
   });
 
-  personaList.querySelectorAll(".p-name, .p-opener").forEach(input => {
+  personaList.querySelectorAll(".p-name, .p-opener, .p-time").forEach(input => {
     input.addEventListener("input", () => updatePersonaDraftFromCard(input.closest(".admin-persona-card")));
   });
 
@@ -214,6 +219,7 @@ function updatePersonaDraftFromCard(card) {
   if (!p) return;
   p.name = card.querySelector(".p-name").value.trim();
   p.avatar = card.querySelector(".p-avatar").value.trim();
+  p.time = card.querySelector(".p-time").value.trim();
   p.opener = card.querySelector(".p-opener").value.trim();
   window.PERSONAS_FOR_ADMIN = personasDraft;
 }
@@ -285,5 +291,58 @@ async function saveAll() {
 document.getElementById("saveBtn").addEventListener("click", saveAll);
 document.getElementById("saveBtnPersonas").addEventListener("click", saveAll);
 document.getElementById("saveBtnAds").addEventListener("click", saveAll);
+
+// ---- campanhas ----
+function renderCampaignList() {
+  const list = document.getElementById("campaignList");
+  const campaigns = currentConfig.campaigns || [];
+  if (!campaigns.length) {
+    list.innerHTML = `<p style="font-size:13px;color:var(--text-dim)">Nenhuma campanha criada ainda.</p>`;
+    return;
+  }
+  const origin = location.origin;
+  list.innerHTML = campaigns.map(slug => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:14px">/${slug}</div>
+        <div style="font-size:12px;color:var(--text-dim);word-break:break-all">${origin}/${slug}</div>
+      </div>
+      <a href="/${slug}/admin.html" target="_blank" class="admin-secondary-btn" style="white-space:nowrap">Configurar</a>
+      <a href="/${slug}/" target="_blank" class="admin-secondary-btn" style="white-space:nowrap">Ver chat</a>
+      <button type="button" class="admin-secondary-btn remove-campaign-btn" data-slug="${slug}" title="Remover">✕</button>
+    </div>
+  `).join("");
+
+  list.querySelectorAll(".remove-campaign-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const slug = btn.dataset.slug;
+      if (!confirm(`Remover campanha "/${slug}"? O conteúdo configurado no KV não será apagado automaticamente.`)) return;
+      currentConfig.campaigns = (currentConfig.campaigns || []).filter(s => s !== slug);
+      await fetch("/api/config", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(currentConfig),
+      });
+      renderCampaignList();
+    });
+  });
+}
+
+document.getElementById("addCampaignBtn").addEventListener("click", async () => {
+  const input = document.getElementById("campaignSlugInput");
+  const slug = input.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  if (!slug) return;
+  const campaigns = currentConfig.campaigns || [];
+  if (campaigns.includes(slug)) { alert("Essa campanha já existe."); return; }
+  campaigns.push(slug);
+  currentConfig.campaigns = campaigns;
+  await fetch("/api/config", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(currentConfig),
+  });
+  input.value = "";
+  renderCampaignList();
+});
 
 loadConfig();

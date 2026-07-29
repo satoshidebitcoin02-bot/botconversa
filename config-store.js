@@ -2,10 +2,18 @@
 // os valores padrão de data.js. Se a API não responder (ex: ainda rodando
 // local sem Functions), cai nos valores padrão sem quebrar o site.
 
+function getSiteId() {
+  if (window.SITE_ID) return window.SITE_ID;
+  const m = location.pathname.match(/^\/([^\/]+)\//);
+  return m ? m[1] : null;
+}
+
 async function loadSiteConfig() {
+  const siteId = getSiteId();
+  const url = siteId ? `/api/config?site=${encodeURIComponent(siteId)}` : "/api/config";
   const timeout = new Promise(resolve => setTimeout(() => resolve(null), 2000));
   try {
-    const res = await Promise.race([fetch("/api/config"), timeout]);
+    const res = await Promise.race([fetch(url), timeout]);
     if (!res || !res.ok) return {};
     return await res.json();
   } catch {

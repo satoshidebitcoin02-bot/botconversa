@@ -52,6 +52,7 @@
       <div id="flowsSubmenuList" class="flows-submenu-list"></div>
     </div>
     <button type="button" class="admin-tab-btn" data-tab="ads"><svg class="icon" width="16" height="16" aria-hidden="true"><use href="#i-megaphone"></use></svg> Anúncios</button>
+    <button type="button" class="admin-tab-btn" data-tab="campaigns"><svg class="icon" width="16" height="16" aria-hidden="true"><use href="#i-shopping-bag"></use></svg> Campanhas</button>
     <div class="admin-sidebar-spacer"></div>
     <a href="index.html" target="_blank" class="admin-sidebar-chat-link">
       <svg class="icon" width="16" height="16" aria-hidden="true"><use href="#i-message"></use></svg> Ver chat
@@ -191,6 +192,18 @@
         <div id="saveStatusAds" class="admin-status"></div>
         <button id="saveBtnAds" class="admin-primary-btn">Salvar alterações</button>
       </div>
+    </section>
+
+    <section id="tab-campaigns" class="admin-tab-panel" hidden>
+      <section class="admin-card">
+        <h2>Campanhas</h2>
+        <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px">Cada campanha tem sua própria URL, personas e fluxos configurados separadamente.</p>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <input type="text" id="campaignSlugInput" placeholder="Ex: 02, verao, promo" style="flex:1" />
+          <button type="button" id="addCampaignBtn" class="admin-primary-btn">+ Criar</button>
+        </div>
+        <div id="campaignList"></div>
+      </section>
     </section>
 
     <section id="tab-flows" class="admin-tab-panel" hidden>
