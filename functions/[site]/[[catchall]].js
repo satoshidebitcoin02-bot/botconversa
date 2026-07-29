@@ -3,6 +3,15 @@
 //     /02/chat.html → chat.html com window.SITE_ID="02"
 //     /02/admin.html → admin.html com window.SITE_ID="02"
 
+// Slugs que não são campanhas — deixa o Cloudflare servir o arquivo estático
+const RESERVED = new Set([
+  "api", "functions", "admin", "admin.html",
+  "index", "index.html", "chat", "chat.html",
+  "styles.css", "admin.css", "script.js", "chat.js", "admin.js",
+  "config-store.js", "data.js", "flow-editor.js", "icons.js",
+  "sound-effects.js", "viewport-fix.js",
+]);
+
 const PAGE_MAP = {
   "":           "index.html",
   "index.html": "index.html",
@@ -12,6 +21,12 @@ const PAGE_MAP = {
 
 export async function onRequest(context) {
   const site = context.params.site;
+
+  // Passa para o handler estático se for caminho reservado ou extensão de arquivo
+  if (RESERVED.has(site) || /\.[a-z0-9]+$/i.test(site)) {
+    return context.next();
+  }
+
   const catchall = context.params.catchall;
   const rawPath = Array.isArray(catchall) ? catchall.join("/") : (catchall || "");
   const page = PAGE_MAP[rawPath] || "index.html";
