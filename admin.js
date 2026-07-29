@@ -52,8 +52,13 @@ document.querySelectorAll(".admin-tab-btn").forEach(btn => {
 activateTab(localStorage.getItem(TAB_STORAGE_KEY) || "appearance");
 
 // ---- carregar / popular ----
+function adminConfigUrl() {
+  const siteId = typeof getSiteId === "function" ? getSiteId() : null;
+  return siteId ? `/api/config?site=${encodeURIComponent(siteId)}` : "/api/config";
+}
+
 async function loadConfig() {
-  const res = await fetch("/api/config");
+  const res = await fetch(adminConfigUrl());
   currentConfig = res.ok ? await res.json() : {};
 
   personasDraft = mergedPersonas(currentConfig).map(p => ({ ...p }));
@@ -275,7 +280,7 @@ async function saveAll() {
 
   const config = buildConfigFromForm();
   try {
-    const res = await fetch("/api/config", {
+    const res = await fetch(adminConfigUrl(), {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(config),
@@ -318,7 +323,7 @@ function renderCampaignList() {
       const slug = btn.dataset.slug;
       if (!confirm(`Remover campanha "/${slug}"? O conteúdo configurado no KV não será apagado automaticamente.`)) return;
       currentConfig.campaigns = (currentConfig.campaigns || []).filter(s => s !== slug);
-      await fetch("/api/config", {
+      await fetch(adminConfigUrl(), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(currentConfig),
