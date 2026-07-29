@@ -386,6 +386,7 @@ function saveNodeModal() {
   markFlowDirty();
   updateTextNodeCard(editingNodeId, nodeData);
   syncNodeHtml(editingNodeId); // garante que o export captura o HTML atualizado
+  dfEditor.updateConnectionNodes("node-" + editingNodeId);
   closeNodeModal();
 }
 
