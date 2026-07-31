@@ -173,6 +173,16 @@ function initDrawflow() {
   dfEditor.on("zoom", renderDisconnectButtons);
   dfEditor.on("translate", renderDisconnectButtons);
 
+  // Remove os botões × durante drag de fio para não bloquear os pontos de entrada
+  container.addEventListener("mousedown", e => {
+    if (e.target.classList.contains("output") || e.target.classList.contains("input")) {
+      clearDisconnectButtons();
+    }
+  }, true);
+  document.addEventListener("mouseup", () => {
+    setTimeout(renderDisconnectButtons, 80);
+  });
+
   // Drawflow só ativa o pan quando ev.target tem classe "drawflow" (o precanvas).
   // Quando o canvas foi transladado, cliques nas áreas vazias atingem o container
   // externo em vez do precanvas — esse listener corrige isso.
